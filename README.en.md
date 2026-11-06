@@ -64,7 +64,7 @@ Anyone with a GitHub account is welcome to use [Issues](https://github.com/kxdyh
 
 For size discrepancies, include the scan scope, the comparison tool, and whether you are comparing logical size, allocated space, or the drive's total used space.
 
-If you cannot access Issues, or your report contains information unsuitable for public sharing, contact **[2297782581@qq.com](mailto:2297782581@qq.com)**.
+If you cannot access Issues, or your report contains information unsuitable for public sharing, contact **[kxdyongheng@gmail.com](mailto:kxdyongheng@gmail.com)**.
 
 ## About this repository
 
