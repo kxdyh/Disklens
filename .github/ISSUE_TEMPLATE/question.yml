@@ -1,0 +1,23 @@
+name: 使用咨询 / Usage question
+description: 询问使用方法或统计口径 / Ask about usage or size metrics.
+title: "[Question] "
+labels: [question]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: 应用版本与 Windows 版本 / App and Windows versions
+    validations:
+      required: true
+  - type: textarea
+    id: question
+    attributes:
+      label: 你的问题 / Your question
+      description: 请说明操作场景；提交截图前隐藏个人路径 / Describe the context and hide personal paths before attaching screenshots.
+    validations:
+      required: true
+  - type: markdown
+    attributes:
+      value: |
+        进度表示已扫描占用相对于所在磁盘已用空间的比例，done 表示遍历完成，完成时不一定是 100%。AI 功能需要自行配置服务和密钥。
+        Progress compares scanned usage with the containing drive's used space. done means traversal is complete and may be below 100%. AI requires your own configured service and key.

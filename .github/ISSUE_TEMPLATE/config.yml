@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 官网与下载 / Website & download
+    url: https://disklens.site/
+    about: 查看产品演示和下载信息 / View demos and download information.
+  - name: 邮件联系 / Contact by email
+    url: mailto:2297782581@qq.com
+    about: 无法访问 Issue，或需要私下沟通 / Use when you cannot access Issues or need to contact the author privately.

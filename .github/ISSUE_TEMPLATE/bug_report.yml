@@ -1,0 +1,65 @@
+name: 问题反馈 / Bug report
+description: 报告崩溃、扫描或界面问题 / Report a crash, scan, or interface issue.
+title: "[Bug] "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢帮助改进 DiskLens。请勿提交 API Key、完整个人路径、敏感文件名或未经脱敏的日志。
+        Thanks for helping improve DiskLens. Remove API keys, personal paths, sensitive filenames, and private data before posting.
+  - type: input
+    id: version
+    attributes:
+      label: 应用版本 / App version
+      description: 填写下载日期或 Release 名称 / Enter the download date or release name.
+    validations:
+      required: true
+  - type: input
+    id: windows
+    attributes:
+      label: Windows 版本 / Windows version
+      placeholder: Windows 11 24H2 x64
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 问题类型 / Area
+      options:
+        - 启动或崩溃 / Startup or crash
+        - 扫描或空间统计 / Scanning or size calculation
+        - 浏览、分页或界面 / Navigation, pagination, or interface
+        - AI 连接或分析 / AI connection or analysis
+        - 其他 / Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤 / Steps to reproduce
+      description: 说明扫描范围和操作步骤，路径请改为示例 / Describe the scan scope and steps; replace paths with examples.
+      placeholder: |
+        1. 扫描一个文件夹 / Scan a folder
+        2. …
+    validations:
+      required: true
+  - type: textarea
+    id: expected_actual
+    attributes:
+      label: 预期与实际结果 / Expected and actual behavior
+      description: 如涉及大小差异，请写明比较工具及口径 / For size differences, identify the comparison tool and size metric.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: 补充信息与脱敏截图 / Additional information and redacted screenshots
+      description: 可附扫描报告中的错误类型；无需提供完整磁盘文件列表 / Error categories from the scan report can help; do not upload a full disk file listing.
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: 提交前确认 / Before submitting
+      options:
+        - label: 已去除密钥和敏感信息 / I have removed keys and sensitive information.
+          required: true

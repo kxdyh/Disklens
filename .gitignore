@@ -1,0 +1,12 @@
+# This repository contains only reviewed release files, docs, and demos.
+*.pdb
+*.log
+.env
+.env.*
+*.user
+*.suo
+bin/
+obj/
+node_modules/
+.vs/
+.idea/

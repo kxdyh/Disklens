@@ -1,0 +1,25 @@
+name: 功能建议 / Feature request
+description: 分享需求或改进建议 / Suggest a feature or improvement.
+title: "[Feature] "
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: 使用场景与遇到的问题 / Use case and problem
+      description: 描述你希望完成的任务 / Describe the task you want to accomplish.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: 建议的改进 / Proposed improvement
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: 其他方案或补充说明 / Alternatives or additional context
+  - type: markdown
+    attributes:
+      value: 请勿附带密钥、个人路径或敏感文件内容。 / Do not include keys, personal paths, or sensitive file contents.
