@@ -6,7 +6,7 @@
 
 Windows 磁盘空间可视化工具，支持多任务扫描与可选的 AI 辅助分析。
 
-[官网与下载](https://disklens.site/) · [最新版本](https://github.com/kxdyh/Disklens/releases/latest) · [问题反馈](https://github.com/kxdyh/Disklens/issues) · [English](README.en.md)
+[官网与下载](https://disklens.site/) · [最新版本](https://github.com/kxdyh/Disklens/releases) · [问题反馈](https://github.com/kxdyh/Disklens/issues) · [English](README.en.md)
 
 Windows 10 / 11 · x64 · 暂时闭源
 
@@ -44,7 +44,7 @@ DiskLens 将文件与文件夹的磁盘占用绘制为矩形方块。先找到�
 
 ## 下载与开始使用
 
-1. 从 [官网](https://disklens.site/) 或 [GitHub Releases](https://github.com/kxdyh/Disklens/releases/latest) 获取 Windows x64 发布包。
+1. 从 [官网](https://disklens.site/) 或 [GitHub Releases](https://github.com/kxdyh/Disklens/releases) 获取 Windows x64 发布包。
 2. 退出旧版，将 ZIP **完整解压到一个文件夹**，运行其中的 `DiskLens.App.exe`，按系统提示确认管理员权限。保留同目录的说明和 AI 提示词模板。
 3. 选择要扫描的磁盘或文件夹，等待扫描完成后逐层浏览占用情况。
 4. 如需 AI 辅助分析，在设置中配置自己的服务地址、模型和 API Key，再主动发起分析。

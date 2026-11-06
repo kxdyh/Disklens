@@ -6,7 +6,7 @@
 
 A visual disk space analyzer for Windows, with concurrent scans and optional AI assistance.
 
-[Website & download](https://disklens.site/) · [Latest release](https://github.com/kxdyh/Disklens/releases/latest) · [Feedback](https://github.com/kxdyh/Disklens/issues) · [简体中文](README.md)
+[Website & download](https://disklens.site/) · [Latest release](https://github.com/kxdyh/Disklens/releases) · [Feedback](https://github.com/kxdyh/Disklens/issues) · [简体中文](README.md)
 
 Windows 10 / 11 · x64 · Currently closed source
 
@@ -44,7 +44,7 @@ These landscape recordings show the app in light and dark themes. They have been
 
 ## Download & get started
 
-1. Get the Windows x64 release from the [website](https://disklens.site/) or [GitHub Releases](https://github.com/kxdyh/Disklens/releases/latest).
+1. Get the Windows x64 release from the [website](https://disklens.site/) or [GitHub Releases](https://github.com/kxdyh/Disklens/releases).
 2. Close the previous version, **extract the entire ZIP into a folder**, then run `DiskLens.App.exe` and accept the administrator prompt. Keep the accompanying instructions and AI prompt template in that folder.
 3. Choose a drive or folder to scan, then browse its space usage when the scan finishes.
 4. To use AI assistance, configure your own service endpoint, model, and API key in Settings, then explicitly request an analysis.
