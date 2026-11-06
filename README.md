@@ -71,3 +71,6 @@ DiskLens 将文件与文件夹的磁盘占用绘制为矩形方块。先找到�
 本仓库用于 DiskLens 的版本分发、产品说明、演示素材与问题反馈。**DiskLens 当前暂时闭源，本仓库不提供产品源码，也未授予开源许可证。** 版权所有与第三方组件说明见 [NOTICE.md](NOTICE.md)。
 
 作者：[kxdyh](https://github.com/kxdyh) · 官网：[disklens.site](https://disklens.site/)
+
+
+[为爱发电 · 支持 DiskLens](https://ifdian.net/a/kxdyh)
