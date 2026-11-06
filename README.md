@@ -8,7 +8,7 @@ Windows 磁盘空间可视化工具，支持多任务扫描与可选的 AI 辅�
 
 [官网与下载](https://disklens.site/) · [最新版本](https://github.com/kxdyh/Disklens/releases) · [问题反馈](https://github.com/kxdyh/Disklens/issues) · [English](README.en.md)
 
-Windows 10 / 11 · x64 · 暂时闭源
+Windows 10 / 11 · x64 
 
 </div>
 
@@ -36,7 +36,7 @@ DiskLens 将文件与文件夹的磁盘占用绘制为矩形方块。先找到�
 
 **专注浏览：从大目录进入下一层。**
 
-![DiskLens 全屏专注与目录浏览](assets/demos/browse-day-night.gif)
+![DiskLens 全屏浏览](assets/demos/browse-day-night.gif)
 
 **多任务：同时扫描两个位置，切换查看各自的进度与结果。**
 
@@ -60,7 +60,7 @@ DiskLens 将文件与文件夹的磁盘占用绘制为矩形方块。先找到�
 
 ## 反馈问题与建议
 
-欢迎任何拥有 GitHub 账号的用户在 [Issues](https://github.com/kxdyh/Disklens/issues) 中选择「问题反馈」「功能建议」或「使用咨询」。请提供应用版本、Windows 版本、复现步骤，以及脱敏后的截图。
+欢迎任何用户在 [Issues](https://github.com/kxdyh/Disklens/issues) 中选择「问题反馈」「功能建议」或「使用咨询」。请提供应用版本、Windows 版本、复现步骤，以及脱敏后的截图。
 
 扫描大小差异类问题，请说明扫描范围、对比工具，以及比较的是「大小」「占用空间」还是整个磁盘的已用空间。
 
