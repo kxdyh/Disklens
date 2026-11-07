@@ -1,6 +1,8 @@
-# Shared experience (test) and validation boundaries
+# Shared-experience research notes and validation boundaries
 
-[简体中文](SHARED-EXPERIENCE.md) · [Product overview](README.en.md) · [Website illustration](https://disklens.site/#shared-experience)
+> **Unreleased / implementation under revision.** Shared experience is not a feature offered in the currently available 1.0 download. Version 1.1 downloads are paused, and we do not recommend enabling its existing implementation limited to selected directory roles. The following material is retained only as historical research and validation notes, not activation instructions or a recommendation for current use.
+
+[简体中文](SHARED-EXPERIENCE.md) · [Product overview](README.en.md) · [Download status](README.en.md)
 
 Shared experience is off by default and covers only supported software directory roles. It does not make every file on a disk free to analyze. When identity and structure match and mature cloud consensus exists, reuse can avoid a repeated personal AI request. Otherwise, the user's own service and API key are still required.
 
