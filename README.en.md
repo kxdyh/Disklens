@@ -72,7 +72,9 @@ If you cannot access Issues, or your report contains information unsuitable for 
 
 This repository hosts DiskLens releases, product documentation, demos, and feedback. **DiskLens is currently closed source. Product source code is not included, and no open-source license is granted.** See [NOTICE.md](NOTICE.md) for the copyright and third-party notice.
 
+When the application source is opened, the official release's support component and reward-code image will remain privately maintained by the author. Source builds can omit that component and still build and use the core features. To prevent replacement of the reward code, changes to the official payment destination are not accepted through pull requests; the author reviews and maintains it.
+
 By [kxdyh](https://github.com/kxdyh) · [disklens.site](https://disklens.site/)
 
 
-[Support DiskLens](https://ifdian.net/a/kxdyh)
+[Support DiskLens (open the reward-code image)](https://disklens.site/media/author-reward.png)
