@@ -9,10 +9,17 @@ public interface ISharedExperienceClient
     Task<SharedConsentState> GetConsentAsync(SharedInstallation installation, CancellationToken cancellationToken = default);
     Task<SharedConsentState> UpdateConsentAsync(SharedInstallation installation, SharedConsentUpdate update, CancellationToken cancellationToken = default);
     Task<SharedQueryResponse> QueryAsync(SharedInstallation installation, long epoch, IReadOnlyList<SharedFingerprint> items, CancellationToken cancellationToken = default);
+    Task<SharedQueryResponse> QueryAsync(SharedInstallation installation, long epoch, IReadOnlyList<SharedFingerprint> items,
+        CancellationToken cancellationToken, bool retryTransientFailure)
+        => QueryAsync(installation, epoch, items, cancellationToken);
     Task<SharedPathIndex?> GetSharedPathIndexAsync(CancellationToken cancellationToken = default)
         => Task.FromResult<SharedPathIndex?>(null);
     Task<SharedPathIndex?> RefreshSharedPathIndexAsync(CancellationToken cancellationToken = default)
         => GetSharedPathIndexAsync(cancellationToken);
+    Task<SharedPathIndex?> GetSharedPathIndexAsync(CancellationToken cancellationToken, bool retryTransientFailure)
+        => GetSharedPathIndexAsync(cancellationToken);
+    Task<SharedPathIndex?> RefreshSharedPathIndexAsync(CancellationToken cancellationToken, bool retryTransientFailure)
+        => RefreshSharedPathIndexAsync(cancellationToken);
     Task<SharedAnnouncementFeed> GetAnnouncementsAsync(CancellationToken cancellationToken = default)
         => Task.FromResult(SharedAnnouncementFeed.Empty);
     Task<SharedQueryResponse> QueryOwnObservationsAsync(SharedInstallation installation, long epoch,
@@ -70,15 +77,24 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
     public Task<SharedConsentState> GetConsentAsync(SharedInstallation installation, CancellationToken cancellationToken = default) => SendReadAsync<SharedConsentState>(HttpMethod.Get, "v1/consent", null, installation, cancellationToken);
     public Task<SharedConsentState> UpdateConsentAsync(SharedInstallation installation, SharedConsentUpdate update, CancellationToken cancellationToken = default) => SendAsync<SharedConsentState>(HttpMethod.Put, "v1/consent", update, installation, cancellationToken);
     public Task<SharedQueryResponse> QueryAsync(SharedInstallation installation, long epoch, IReadOnlyList<SharedFingerprint> items, CancellationToken cancellationToken = default)
+        => QueryAsync(installation, epoch, items, cancellationToken, retryTransientFailure: true);
+
+    public Task<SharedQueryResponse> QueryAsync(SharedInstallation installation, long epoch, IReadOnlyList<SharedFingerprint> items,
+        CancellationToken cancellationToken, bool retryTransientFailure)
     {
         if (items.Count > 25) throw new ArgumentOutOfRangeException(nameof(items));
         if (items.Any(item => !SharedFingerprintProtocol.IsValid(item))) throw new ArgumentException("查询项目不符合匿名路径格式。", nameof(items));
-        return SendReadAsync<SharedQueryResponse>(HttpMethod.Post, "v1/query", new { epoch, items }, installation, cancellationToken);
+        return SendReadAsync<SharedQueryResponse>(HttpMethod.Post, "v1/query", new { epoch, items }, installation,
+            cancellationToken, retryTransientFailure);
     }
     public Task<SharedPathIndex?> GetSharedPathIndexAsync(CancellationToken cancellationToken = default)
-        => LoadSharedPathIndexAsync(forceRefresh: false, cancellationToken);
+        => GetSharedPathIndexAsync(cancellationToken, retryTransientFailure: true);
     public Task<SharedPathIndex?> RefreshSharedPathIndexAsync(CancellationToken cancellationToken = default)
-        => LoadSharedPathIndexAsync(forceRefresh: true, cancellationToken);
+        => RefreshSharedPathIndexAsync(cancellationToken, retryTransientFailure: true);
+    public Task<SharedPathIndex?> GetSharedPathIndexAsync(CancellationToken cancellationToken, bool retryTransientFailure)
+        => LoadSharedPathIndexAsync(forceRefresh: false, cancellationToken, retryTransientFailure);
+    public Task<SharedPathIndex?> RefreshSharedPathIndexAsync(CancellationToken cancellationToken, bool retryTransientFailure)
+        => LoadSharedPathIndexAsync(forceRefresh: true, cancellationToken, retryTransientFailure);
     public async Task<SharedAnnouncementFeed> GetAnnouncementsAsync(CancellationToken cancellationToken = default)
     {
         // Public reading uses the same route, deadlines and diagnostics as cloud
@@ -88,7 +104,8 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
         if (!feed.IsValid()) throw new InvalidDataException("公告响应格式不正确。");
         return feed;
     }
-    private async Task<SharedPathIndex?> LoadSharedPathIndexAsync(bool forceRefresh, CancellationToken cancellationToken)
+    private async Task<SharedPathIndex?> LoadSharedPathIndexAsync(bool forceRefresh, CancellationToken cancellationToken,
+        bool retryTransientFailure)
     {
         if (!forceRefresh && _pathIndex is { IsUsable: true } cached) return cached;
         await _pathIndexGate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -102,7 +119,8 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
             do
             {
                 var page = await SendReadAsync<SharedPathIndex>(HttpMethod.Get, "v1/path-index"
-                    + (cursor is null ? "" : "?cursor=" + Uri.EscapeDataString(cursor)), null, null, cancellationToken).ConfigureAwait(false);
+                    + (cursor is null ? "" : "?cursor=" + Uri.EscapeDataString(cursor)), null, null,
+                    cancellationToken, retryTransientFailure).ConfigureAwait(false);
                 if (page.Version != 1 || !page.Complete || page.Shapes is null
                     || (long)page.Shapes.Count + (page.LegacyKeys?.Count ?? 0) > 1000
                     || page.BuiltAt > DateTimeOffset.UtcNow.AddMinutes(1) || page.ExpiresAt <= DateTimeOffset.UtcNow
@@ -249,7 +267,7 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
         await SendAsync<JsonElement>(HttpMethod.Post, "v1/feedback", new { epoch, key, reason }, installation, cancellationToken).ConfigureAwait(false);
     }
     private async Task<T> SendReadAsync<T>(HttpMethod method, string path, object? body,
-        SharedInstallation? installation, CancellationToken cancellationToken)
+        SharedInstallation? installation, CancellationToken cancellationToken, bool retryTransientFailure = true)
     {
         // Only explicitly read-only operations use this retry boundary.
         // A write whose response was lost must never be replayed here.
@@ -263,9 +281,8 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
             catch (Exception ex) when (attempt == 0 && !cancellationToken.IsCancellationRequested
                 && IsTransientReadFailure(ex))
             {
-                // Only a known read-only operation can retry after retiring stale
-                // network/proxy pools. Writes keep their original nonreplay boundary.
                 _initialConnectionRoute?.RefreshAfterReadFailure(ex);
+                if (!retryTransientFailure) throw;
                 await Task.Delay(250, cancellationToken).ConfigureAwait(false);
             }
         }

@@ -25,8 +25,11 @@ public sealed class FileSystemNodeIndex
         new Dictionary<string, FileSystemNode>(StringComparer.Ordinal) { [root.Path] = root },
         new Dictionary<string, string?>(StringComparer.Ordinal) { [root.Path] = null });
 
-    public static FileSystemNodeIndex Build(FileSystemNode? root)
+    public static FileSystemNodeIndex Build(FileSystemNode? root) => Build(root, CancellationToken.None);
+
+    public static FileSystemNodeIndex Build(FileSystemNode? root, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (root is null)
         {
             return Empty;
@@ -34,7 +37,7 @@ public sealed class FileSystemNodeIndex
 
         var nodesByPath = new Dictionary<string, FileSystemNode>(StringComparer.Ordinal);
         var parentPathsByPath = new Dictionary<string, string?>(StringComparer.Ordinal);
-        AddNode(root, parentPath: null, nodesByPath, parentPathsByPath);
+        AddNode(root, parentPath: null, nodesByPath, parentPathsByPath, cancellationToken);
         return new FileSystemNodeIndex(nodesByPath, parentPathsByPath);
     }
 
@@ -74,14 +77,16 @@ public sealed class FileSystemNodeIndex
         FileSystemNode node,
         string? parentPath,
         IDictionary<string, FileSystemNode> nodesByPath,
-        IDictionary<string, string?> parentPathsByPath)
+        IDictionary<string, string?> parentPathsByPath,
+        CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         nodesByPath[node.Path] = node;
         parentPathsByPath[node.Path] = parentPath;
 
         foreach (var child in node.Children)
         {
-            AddNode(child, node.Path, nodesByPath, parentPathsByPath);
+            AddNode(child, node.Path, nodesByPath, parentPathsByPath, cancellationToken);
         }
     }
 }

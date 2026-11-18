@@ -471,6 +471,7 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
 
     private sealed class FakeClient : ISharedExperienceClient
     {
+        public SharedPathIndex? PathIndex { get; set; }
         public bool Offline { get; set; }
         public Exception? Failure { get; set; }
         public bool FailContributions { get; set; }
@@ -482,6 +483,8 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
         public Func<int, long, SharedContributionReceipt>? ContributionResponse { get; set; }
         public int QueryCalls { get; private set; }
         public int ContributionCalls { get; private set; }
+        public Task<SharedPathIndex?> GetSharedPathIndexAsync(CancellationToken cancellationToken = default)
+            => Task.FromResult(PathIndex);
         public async Task<SharedQueryResponse> QueryAsync(SharedInstallation installation, long epoch,
             IReadOnlyList<SharedFingerprint> items, CancellationToken cancellationToken = default)
         {

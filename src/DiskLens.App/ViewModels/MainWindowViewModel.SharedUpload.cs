@@ -31,6 +31,7 @@ public sealed partial class MainWindowViewModel
     public string FooterCloudActivityIcon => IsFooterCloudActivityWarning ? "!"
         : IsLoadingSharedExperience ? "↓" : "↑";
     public string FooterCloudActivityHeadlineText => IsLoadingSharedExperience ? L.T("正在加载云端经验")
+        : _sharedLookupStopped ? L.T("云端经验匹配已停止")
         : _sharedLookupIncomplete ? L.T("云端经验加载未完成")
         : IsFooterSharedUploadReminderVisible
         ? _sharedUploadStatus.Stage switch
@@ -42,9 +43,10 @@ public sealed partial class MainWindowViewModel
         }
         : L.T("正在加载云端经验");
     public string FooterCloudActivityDetailText => IsLoadingSharedExperience || _sharedLookupIncomplete
-        ? SharedLookupStageText + Environment.NewLine + SharedLookupProgressDetailText
+        ? (IsLoadingSharedExperience ? SharedLookupStageText + Environment.NewLine : string.Empty)
+            + SharedLookupProgressDetailText
             + (_sharedLookupIncomplete && !IsLoadingSharedExperience
-                ? Environment.NewLine + L.T("请检查网络后重试，已取得的结果仍可查看。") : string.Empty)
+                ? Environment.NewLine + L.T("点击「重试匹配」重新匹配，已显示的结果会保留。") : string.Empty)
             + (IsFooterSharedUploadReminderVisible ? Environment.NewLine + RenderSharedUploadNotice(_sharedUploadStatus) : string.Empty)
         : RenderSharedUploadNotice(_sharedUploadStatus);
     public double FooterCloudActivityProgressValue => IsLoadingSharedExperience || _sharedLookupIncomplete ? SharedLookupProgressValue

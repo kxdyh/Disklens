@@ -216,7 +216,6 @@ public sealed partial class MainWindowViewModel
         // the durable contribution queue that should resume after reconnection.
         await RefreshSharedConsentAsync();
         await ApplyOfflineStatusAsync(runtime, analysisPath);
-        PostSharedRecovery(() => ScheduleSharedLookupRecovery());
     }
 
     private async Task ApplyOfflineStatusAsync(SharedKnowledgeRuntime? runtime, string? analysisPath = null)
@@ -459,9 +458,12 @@ public sealed partial class MainWindowViewModel
     }
 
     private async Task BindSharedMissingPathsAsync(FileSystemNode snapshot, SharedConsentSnapshot? capturedConsent,
-        IReadOnlyList<string> missingPaths, bool pathPurposeLookup = false, string? lookupScopePath = null)
+        IReadOnlyList<string> missingPaths, bool pathPurposeLookup = false, string? lookupScopePath = null,
+        CancellationToken cancellationToken = default)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         await RefreshSharedConsentAsync();
+        cancellationToken.ThrowIfCancellationRequested();
         if (!ReferenceEquals(ScanRoot, snapshot) || !SameSharedConsent(capturedConsent, _sharedConsent)) return;
         _sharedMissingPaths.Clear();
         foreach (var path in missingPaths)
@@ -489,22 +491,22 @@ public sealed partial class MainWindowViewModel
             : new HashSet<string>(StringComparer.Ordinal), _sharedLookupCapturedAt);
     }
 
-    public async Task ApplySharedLookupResultAsync(FileSystemNode scanSnapshot, SharedConsentSnapshot capturedConsent,
+    public async Task<bool> ApplySharedLookupResultAsync(FileSystemNode scanSnapshot, SharedConsentSnapshot capturedConsent,
         SharedResolutionBatch resolution, IReadOnlyDictionary<string, AiAnalysisMemoryEntry>? capturedLocalEntries = null,
-        string? lookupScopePath = null)
+        string? lookupScopePath = null, CancellationToken cancellationToken = default)
     {
-        if (_isDisposed || IsAnalyzing || IsReanalysisSelectionMode) return;
+        if (_isDisposed || IsAnalyzing || IsReanalysisSelectionMode || cancellationToken.IsCancellationRequested) return false;
         await RefreshSharedConsentAsync();
         if (_isDisposed || IsAnalyzing || IsReanalysisSelectionMode || !ReferenceEquals(ScanRoot, scanSnapshot)
-            || !SameSharedConsent(capturedConsent, _sharedConsent)) return;
+            || !SameSharedConsent(capturedConsent, _sharedConsent) || cancellationToken.IsCancellationRequested) return false;
         // A local rematch replaces only that region's negative answers. Snapshot
         // mapping resets the binding, so capture unrelated answers before mapping.
         var preservedMissing = lookupScopePath is not null && ReferenceEquals(_sharedMissingSnapshot, scanSnapshot)
             && SameSharedConsent(_sharedMissingConsent, capturedConsent)
             ? _sharedMissingPaths.Where(path => !IsWithinSharedLookupScope(path, lookupScopePath)).ToArray()
             : Array.Empty<string>();
-        // Even an interrupted batch can contain valid acknowledged cloud hits.
-        // Apply them before scheduling recovery of unread items.
+        // A partial lookup can still provide valid cloud hits. Retain them
+        // while the user decides whether to retry the unread items.
         var applicable = resolution.ResultsByPath.Values.Where(result =>
             IsUsableKnownCloudResult(result)
             && (lookupScopePath is null || IsWithinSharedLookupScope(result.Path, lookupScopePath))
@@ -513,14 +515,15 @@ public sealed partial class MainWindowViewModel
                 || node.Analysis.Origin is AiAnalysisResultOrigin.SharedExperience or AiAnalysisResultOrigin.AiAnalyzed
                     or AiAnalysisResultOrigin.CacheReused)).ToArray();
         var mappedRoot = applicable.Length == 0 ? scanSnapshot
-            : await Task.Run(() => ApplyAnalysisResults(scanSnapshot, applicable));
+            : await Task.Run(() => ApplyAnalysisResults(scanSnapshot, applicable, cancellationToken), cancellationToken);
         await RefreshSharedConsentAsync();
         if (_isDisposed || IsAnalyzing || IsReanalysisSelectionMode || !ReferenceEquals(ScanRoot, scanSnapshot)
-            || !SameSharedConsent(capturedConsent, _sharedConsent)) return;
+            || !SameSharedConsent(capturedConsent, _sharedConsent) || cancellationToken.IsCancellationRequested) return false;
         if (!ReferenceEquals(mappedRoot, scanSnapshot))
         {
             if (!await ApplySnapshotAsync(mappedRoot, canApplySnapshot: () => !_isDisposed && !IsAnalyzing && !IsReanalysisSelectionMode
-                && ReferenceEquals(ScanRoot, scanSnapshot) && SameSharedConsent(capturedConsent, _sharedConsent))) return;
+                && !cancellationToken.IsCancellationRequested && ReferenceEquals(ScanRoot, scanSnapshot)
+                && SameSharedConsent(capturedConsent, _sharedConsent), cancellationToken: cancellationToken)) return false;
             RebuildAnalysisItems(mappedRoot);
         }
         if (capturedLocalEntries is not null && SharedRuntime is { } runtime)
@@ -534,31 +537,29 @@ public sealed partial class MainWindowViewModel
             if (duplicates.Length > 0)
             {
                 await RefreshSharedConsentAsync();
-                if (!_isDisposed && !IsAnalyzing && !IsReanalysisSelectionMode && ReferenceEquals(ScanRoot, mappedRoot)
+                if (!_isDisposed && !cancellationToken.IsCancellationRequested && !IsAnalyzing && !IsReanalysisSelectionMode && ReferenceEquals(ScanRoot, mappedRoot)
                     && ReferenceEquals(runtime, SharedRuntime) && SameSharedConsent(capturedConsent, _sharedConsent))
                 {
-                    try { await runtime.Memory.RemoveEntriesIfUnchangedAsync(scanSnapshot.Path, duplicates); }
+                    try { await runtime.Memory.RemoveEntriesIfUnchangedAsync(scanSnapshot.Path, duplicates, cancellationToken); }
+                    catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
                     catch (Exception) { /* A cloud read remains usable when optional cache cleanup cannot be saved. */ }
                 }
             }
         }
         await BindSharedMissingPathsAsync(mappedRoot, capturedConsent,
             preservedMissing.Concat(resolution.Unavailable ? [] : resolution.MissingPaths).ToArray(),
-            pathPurposeLookup: true, lookupScopePath: lookupScopePath);
+            pathPurposeLookup: true, lookupScopePath: lookupScopePath, cancellationToken: cancellationToken);
         if (_isDisposed || IsAnalyzing || IsReanalysisSelectionMode || !ReferenceEquals(ScanRoot, mappedRoot)
-            || !SameSharedConsent(capturedConsent, _sharedConsent)) return;
+            || !SameSharedConsent(capturedConsent, _sharedConsent) || cancellationToken.IsCancellationRequested) return false;
         SetSharedSummary(() => L.F($"云端经验库匹配 {applicable.Length} 项。")
             + (resolution.Unavailable ? L.T(" 部分查询失败，请稍后重试。") : string.Empty));
         if (resolution.Unavailable) StatusText = SharedExperienceSummaryText;
-        if ((resolution.Unavailable || resolution.FailedCount > 0) && lookupScopePath is null) ScheduleSharedLookupRecovery();
-        else if (!resolution.Unavailable && resolution.FailedCount == 0)
+        if (!resolution.Unavailable && resolution.FailedCount == 0)
         {
             IsOfflineAlertVisible = false;
-            ResetSharedLookupRecovery();
-            // This completed pass also satisfies any delayed reconnect intent.
-            // A queued callback must not launch another pass after success.
             ConsumePendingSharedConsentLookup();
         }
+        return true;
     }
 
     private static bool IsUsableKnownCloudResult(AiAnalysisResult result, bool requireOriginalText = false)

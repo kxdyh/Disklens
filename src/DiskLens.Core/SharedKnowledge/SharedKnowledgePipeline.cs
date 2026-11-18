@@ -45,7 +45,7 @@ public sealed class SharedKnowledgePipeline(ISharedConsentSource consentSource, 
 
     public async Task<SharedResolutionBatch> ResolveAsync(IReadOnlyList<AiCandidateRecord> candidates,
         CancellationToken cancellationToken, SharedPathIndex? sharedPathIndex = null,
-        IProgress<SharedResolutionProgress>? progress = null)
+        IProgress<SharedResolutionProgress>? progress = null, bool retryFailedBatches = true)
     {
         var initial = (await CaptureConsentAsync(cancellationToken).ConfigureAwait(false))!;
         if (!initial.CanShare) return SharedResolutionBatch.Empty;
@@ -114,11 +114,11 @@ public sealed class SharedKnowledgePipeline(ISharedConsentSource consentSource, 
         if (consentChanged) return SharedResolutionBatch.Empty;
         // Retry only failed identities. Successful answers and authoritative misses
         // remain intact, including when a later batch fails on another connection.
-        var recovery = extracted.Where(pair => failedPaths.Contains(pair.Candidate.Path))
-            .GroupBy(pair => pair.Fingerprint.Key, StringComparer.Ordinal)
-            .Chunk(25).Select(chunk => chunk.SelectMany(group => group).ToArray()).ToArray();
-        if (recovery.Length > 0 && (!requiresNetwork || _networkAvailability.IsNetworkAvailable))
+        if (retryFailedBatches && failedPaths.Count > 0 && (!requiresNetwork || _networkAvailability.IsNetworkAvailable))
         {
+            var recovery = extracted.Where(pair => failedPaths.Contains(pair.Candidate.Path))
+                .GroupBy(pair => pair.Fingerprint.Key, StringComparer.Ordinal)
+                .Chunk(25).Select(chunk => chunk.SelectMany(group => group).ToArray()).ToArray();
             ReportLookupProgress(progress, new(processed, candidates.Count, results.Count, failedPaths.Count, true));
             await ResolveBatchesAsync(recovery, isRetry: true).ConfigureAwait(false);
         }
@@ -137,7 +137,7 @@ public sealed class SharedKnowledgePipeline(ISharedConsentSource consentSource, 
             { MaxDegreeOfParallelism = MaximumConcurrentQueries, CancellationToken = cancellationToken }, async (batch, token) =>
             {
                 lock (resultGate) { if (consentChanged) return; }
-                var outcome = await QueryBatchAsync(batch, initial, token).ConfigureAwait(false);
+                var outcome = await QueryBatchAsync(batch, initial, token, retryFailedBatches).ConfigureAwait(false);
                 lock (resultGate)
                 {
                     if (outcome.ConsentChanged) { consentChanged = true; return; }
@@ -177,7 +177,7 @@ public sealed class SharedKnowledgePipeline(ISharedConsentSource consentSource, 
 
     private async Task<QueryBatchOutcome> QueryBatchAsync(
         IReadOnlyList<(AiCandidateRecord Candidate, SharedFingerprint Fingerprint)> batch,
-        SharedConsentSnapshot initial, CancellationToken cancellationToken)
+        SharedConsentSnapshot initial, CancellationToken cancellationToken, bool retryTransientFailure)
     {
         var answers = new Dictionary<string, AiAnalysisResult>(StringComparer.Ordinal);
         var misses = new HashSet<string>(StringComparer.Ordinal);
@@ -189,7 +189,8 @@ public sealed class SharedKnowledgePipeline(ISharedConsentSource consentSource, 
         if (items.Length == 0) return new(answers, misses);
         try
         {
-            var response = await client.QueryAsync(current.Installation!, current.Epoch, items, cancellationToken).ConfigureAwait(false);
+            var response = await client.QueryAsync(current.Installation!, current.Epoch, items,
+                cancellationToken, retryTransientFailure).ConfigureAwait(false);
             if (!SameConsent(initial, await consentSource.GetSnapshotAsync(cancellationToken).ConfigureAwait(false)))
                 return new(answers, misses, ConsentChanged: true);
             var requestedKeys = items.Select(item => item.Key).ToHashSet(StringComparer.Ordinal);

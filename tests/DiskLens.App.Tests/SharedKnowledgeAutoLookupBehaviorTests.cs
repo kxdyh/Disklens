@@ -6,6 +6,61 @@ namespace DiskLens.App.Tests;
 // fake client is queried; these tests never execute a real scan, HTTP or paid AI.
 public sealed partial class SharedKnowledgeSelectionBehaviorTests
 {
+    [Theory]
+    [InlineData("failed")]
+    [InlineData("stopped")]
+    [InlineData("closed")]
+    public void Incomplete_matching_waits_for_the_user_and_closing_cancels_a_pending_read(string outcome) => OnSta(() =>
+    {
+        using var fixture = new Fixture(configured: false);
+        fixture.Enable();
+        var now = DateTimeOffset.UtcNow;
+        var cacheIdentity = "generic-v3|0|path3:os-downloads/cache|purpose3-directory";
+        var digest = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(
+            System.Text.Encoding.UTF8.GetBytes(cacheIdentity))).ToLowerInvariant();
+        fixture.Client.PathIndex = new(1, [], true, now, now.AddMinutes(3), LegacyKeys: [digest]);
+        fixture.Client.ReturnMatches = true;
+        fixture.ApplyScan();
+        Complete(fixture.Vm.RefreshSharedExperienceAfterScanAsync());
+        fixture.SelectDirectory();
+        Assert.Equal(AiAnalysisResultOrigin.SharedExperience, fixture.Vm.SelectedNode!.Analysis!.Origin);
+        Assert.Equal(1, fixture.Client.QueryCalls);
+
+        if (outcome == "failed")
+        {
+            fixture.Client.Failure = new System.Net.Http.HttpRequestException("Synthetic shared lookup timeout.");
+            Complete(fixture.Vm.RefreshSharedExperienceAfterScanAsync());
+            fixture.Client.Failure = null;
+        }
+        else
+        {
+            var gate = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+            fixture.Client.BeforeQueryResponse = gate.Task;
+            var lookup = fixture.Vm.RefreshSharedExperienceAfterScanAsync();
+            WaitUntil(() => fixture.Client.QueryCalls == 2);
+            Assert.False(lookup.IsCompleted);
+            if (outcome == "closed") fixture.Vm.Dispose();
+            else fixture.Vm.StopSharedExperienceLookup();
+            Complete(lookup);
+            Assert.False(gate.Task.IsCompleted);
+            fixture.Client.BeforeQueryResponse = null;
+            if (outcome == "closed")
+            {
+                Assert.False(fixture.Vm.IsLoadingSharedExperience);
+                Assert.False(fixture.Vm.CanRetrySharedExperienceLookup);
+                return;
+            }
+        }
+
+        Assert.Equal(2, fixture.Client.QueryCalls);
+        Assert.False(fixture.Vm.IsLoadingSharedExperience);
+        Assert.True(fixture.Vm.CanRetrySharedExperienceLookup);
+        Assert.Equal(AiAnalysisResultOrigin.SharedExperience, fixture.Vm.SelectedNode!.Analysis!.Origin);
+        Complete(fixture.Vm.RetrySharedExperienceLookupAsync());
+        Assert.Equal(3, fixture.Client.QueryCalls);
+        Assert.False(fixture.Vm.IsSharedLookupRetryVisible);
+    });
+
     [Fact]
     public void Cloud_lookup_cancels_an_already_running_watcher_refresh_before_applying_results() => OnSta(() =>
     {

@@ -8,6 +8,8 @@ public sealed partial class MainWindowViewModel
     private CancellationTokenSource? _sharedLookupCancellation;
     private SharedLookupProgress _sharedLookupProgress = new(SharedLookupStage.Preparing, 0, 0, 0, 0);
     private bool _sharedLookupIncomplete;
+    private bool _sharedLookupStopped;
+    private string? _sharedLookupScopePath;
     private bool _isPreparingSharedLookup;
     private bool _isLoadingSharedExperience;
     public bool IsLoadingSharedExperience
@@ -15,16 +17,26 @@ public sealed partial class MainWindowViewModel
         get => _isLoadingSharedExperience;
         private set
         {
-            if (SetProperty(ref _isLoadingSharedExperience, value)) NotifySharedRematchState();
+            if (!SetProperty(ref _isLoadingSharedExperience, value)) return;
+            NotifySharedRematchState();
+            NotifySharedUploadFooter();
         }
     }
 
     public bool CanRematchCurrentSharedExperience => !_isDisposed && ScanRoot is not null
         && SharedRuntime is not null && _sharedConsent is { CanShare: true }
-        && !_isPreparingSharedLookup && !IsLoadingSharedExperience && !IsScanning && !IsAnalyzing
+        && !_isPreparingSharedLookup && !IsLoadingSharedExperience && !IsScanning && !IsScanQueued && !IsAnalyzing
         && !IsRefreshing && !IsReanalysisSelectionMode && !IsAiSetupOpen && !IsScanReportOpen;
 
-    private void NotifySharedRematchState() => OnPropertyChanged(nameof(CanRematchCurrentSharedExperience));
+    public bool IsSharedLookupRetryVisible => _sharedLookupIncomplete && !IsLoadingSharedExperience;
+    public bool CanRetrySharedExperienceLookup => IsSharedLookupRetryVisible && CanRematchCurrentSharedExperience;
+
+    private void NotifySharedRematchState()
+    {
+        OnPropertyChanged(nameof(CanRematchCurrentSharedExperience));
+        OnPropertyChanged(nameof(IsSharedLookupRetryVisible));
+        OnPropertyChanged(nameof(CanRetrySharedExperienceLookup));
+    }
 
     private static bool IsWithinSharedLookupScope(string path, string scopePath)
     {
@@ -36,6 +48,24 @@ public sealed partial class MainWindowViewModel
 
     public Task RematchCurrentSharedExperienceAsync() => CanRematchCurrentSharedExperience
         ? RefreshSharedExperienceAsync(currentRegionOnly: true) : Task.CompletedTask;
+
+    public Task RetrySharedExperienceLookupAsync() => CanRetrySharedExperienceLookup
+        ? RefreshSharedExperienceAsync(currentRegionOnly: _sharedLookupScopePath is not null,
+            requestedScopePath: _sharedLookupScopePath, forceRefreshPathIndex: true)
+        : Task.CompletedTask;
+
+    public void StopSharedExperienceLookup()
+    {
+        if (_sharedLookupCancellation is not { IsCancellationRequested: false } cancellation) return;
+        cancellation.Cancel();
+        MarkSharedLookupIncomplete(stopped: true);
+        IsLoadingSharedExperience = false;
+        SetSharedSummary(() => L.T("云端经验匹配已停止"));
+        StatusText = SharedExperienceSummaryText;
+        NotifySharedLookupSummary();
+        if (SharedRuntime is { } runtime) RecordSharedLookupEvent(runtime,
+            _sharedLookupScopePath is null ? "FullScan" : "Region", "Stopped");
+    }
 
     public string SharedLookupStageText => L.T(_sharedLookupProgress.Stage switch
     {
@@ -70,12 +100,13 @@ public sealed partial class MainWindowViewModel
     // This is a read-only lookup. It must never configure or invoke an AI provider.
     public Task RefreshSharedExperienceAfterScanAsync() => RefreshSharedExperienceAsync(currentRegionOnly: false);
 
-    private async Task RefreshSharedExperienceAsync(bool currentRegionOnly)
+    private async Task RefreshSharedExperienceAsync(bool currentRegionOnly, string? requestedScopePath = null,
+        bool forceRefreshPathIndex = false)
     {
         if (_isPreparingSharedLookup || IsLoadingSharedExperience) return;
         _isPreparingSharedLookup = true;
         NotifySharedRematchState();
-        try { await RunSharedExperienceLookupAsync(currentRegionOnly); }
+        try { await RunSharedExperienceLookupAsync(currentRegionOnly, requestedScopePath, forceRefreshPathIndex); }
         finally
         {
             _isPreparingSharedLookup = false;
@@ -84,10 +115,11 @@ public sealed partial class MainWindowViewModel
         }
     }
 
-    private async Task RunSharedExperienceLookupAsync(bool currentRegionOnly)
+    private async Task RunSharedExperienceLookupAsync(bool currentRegionOnly, string? requestedScopePath,
+        bool forceRefreshPathIndex)
     {
         if (_isDisposed || ScanRoot is null || IsScanning || IsAnalyzing || IsRefreshing || IsReanalysisSelectionMode) return;
-        var requestedScopePath = currentRegionOnly ? GetRefreshTarget()?.Path : null;
+        if (currentRegionOnly) requestedScopePath ??= GetRefreshTarget()?.Path;
         if (currentRegionOnly && requestedScopePath is null) return;
         ConsumePendingSharedConsentLookup();
         if (SharedRuntime is not { } runtime)
@@ -104,26 +136,31 @@ public sealed partial class MainWindowViewModel
             return;
         }
         var lookupRoot = currentRegionOnly ? _scanNodeIndex.FindNode(requestedScopePath!) : snapshot;
-        if (lookupRoot is null) return;
+        if (lookupRoot is null)
+        {
+            CancelSharedLookup();
+            StatusText = L.T("要匹配的目录已不在扫描结果中。");
+            return;
+        }
         // Refreshing consent may itself discover the just-enabled state. This
         // invocation already serves that intent, including its deferred callback.
         ConsumePendingSharedConsentLookup();
+        CancelSharedLookup();
+        _sharedLookupScopePath = currentRegionOnly ? lookupRoot.Path : null;
+        var phase = currentRegionOnly ? "Region" : "FullScan";
         if (NetworkFailureClassifier.IsNetworkUnavailable(runtime.Endpoint.AbsoluteUri, runtime.NetworkAvailability))
         {
-            CancelSharedLookup();
-            _sharedLookupIncomplete = true;
-            SetSharedLookupProgress(new(SharedLookupStage.Completed, 0, 0, 0, 0));
+            MarkSharedLookupIncomplete();
+            RecordSharedLookupEvent(runtime, phase, "Offline");
             await HandleLookupOfflineAsync();
             if (!currentRegionOnly) await RestoreLocalHistoryAfterScanAsync();
             return;
         }
 
-        CancelSharedLookup();
         using var cancellation = new CancellationTokenSource();
         _sharedLookupCancellation = cancellation;
-        SetSharedLookupProgress(new(SharedLookupStage.Preparing, 0, 0, 0, 0));
         IsLoadingSharedExperience = true;
-        RecordSharedLookupEvent(runtime, currentRegionOnly ? "Region" : "FullScan", "Started");
+        RecordSharedLookupEvent(runtime, phase, "Started");
         // A watcher refresh may already be in flight before the lookup became busy.
         // Cancel that refresh so its older tree cannot replace this lookup's snapshot.
         _automaticRefreshCancellation?.Cancel();
@@ -131,6 +168,7 @@ public sealed partial class MainWindowViewModel
         // analysis threshold or visual size filter.
         SetSharedSummary(() => L.T("正在匹配云端经验库，无需配置 API…"));
         NotifySharedLookupSummary();
+        var lookupSettled = false;
         try
         {
             // Progress<T> captures the UI context. Recheck ownership when each
@@ -142,9 +180,12 @@ public sealed partial class MainWindowViewModel
             }));
             var capturedLocalEntries = await runtime.Memory.LoadEntriesAsync(snapshot.Path, cancellation.Token);
             var resolution = await Task.Run(() => runtime.ResolveScannedExperienceAsync(lookupRoot,
-                cancellation.Token, progress, forceRefreshPathIndex: currentRegionOnly,
-                recoverLegacyContributions: !currentRegionOnly), cancellation.Token);
+                cancellation.Token, progress, forceRefreshPathIndex: currentRegionOnly || forceRefreshPathIndex,
+                recoverLegacyContributions: !currentRegionOnly && !forceRefreshPathIndex), cancellation.Token);
             if (!CanApplyLookup()) return;
+            if (!await ApplySharedLookupResultAsync(snapshot, consent, resolution, capturedLocalEntries,
+                lookupScopePath: _sharedLookupScopePath, cancellationToken: cancellation.Token)
+                || !OwnsLookup()) return;
             // An unavailable index has no candidate counts. Retain that failure
             // explicitly instead of turning Completed(0, 0, 0, 0) into success.
             _sharedLookupIncomplete = resolution.Unavailable || resolution.FailedCount > 0;
@@ -154,23 +195,19 @@ public sealed partial class MainWindowViewModel
                 Matched = resolution.MatchedCount,
                 Failed = resolution.FailedCount,
             });
-            await ApplySharedLookupResultAsync(snapshot, consent, resolution, capturedLocalEntries,
-                lookupScopePath: currentRegionOnly ? lookupRoot.Path : null);
-            RecordSharedLookupEvent(runtime, currentRegionOnly ? "Region" : "FullScan",
-                resolution.Unavailable || resolution.FailedCount > 0 ? "Incomplete" : "Completed");
+            lookupSettled = true;
+            RecordSharedLookupEvent(runtime, phase, _sharedLookupIncomplete ? "Incomplete" : "Completed");
         }
-        catch (OperationCanceledException)
-        {
-            if (CanApplyLookup(allowTimeout: true)) ShowLookupFailure();
-        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
         catch (Exception ex)
         {
-            if (CanApplyLookup())
+            if (OwnsLookup())
             {
                 if (NetworkFailureClassifier.IsOffline(ex, runtime.NetworkAvailability))
                 {
-                    _sharedLookupIncomplete = true;
-                    SetSharedLookupProgress(_sharedLookupProgress with { Stage = SharedLookupStage.Completed });
+                    lookupSettled = true;
+                    MarkSharedLookupIncomplete();
+                    RecordSharedLookupEvent(runtime, phase, "Offline");
                     await HandleLookupOfflineAsync();
                 }
                 else ShowLookupFailure();
@@ -180,6 +217,7 @@ public sealed partial class MainWindowViewModel
         {
             if (ReferenceEquals(_sharedLookupCancellation, cancellation))
             {
+                if (!lookupSettled && OwnsLookup()) ShowLookupFailure("Interrupted");
                 _sharedLookupCancellation = null;
                 IsLoadingSharedExperience = false;
                 // A valid cloud answer owns its path. Personal history fills only
@@ -192,20 +230,20 @@ public sealed partial class MainWindowViewModel
             }
         }
 
-        bool CanApplyLookup(bool allowTimeout = false) => !_isDisposed
+        bool OwnsLookup() => !_isDisposed
             && ReferenceEquals(_sharedLookupCancellation, cancellation)
-            && (allowTimeout || !cancellation.IsCancellationRequested)
-            && ReferenceEquals(snapshot, ScanRoot) && ReferenceEquals(runtime, SharedRuntime)
+            && !cancellation.IsCancellationRequested && ReferenceEquals(runtime, SharedRuntime)
             && !IsScanning && !IsAnalyzing && !IsRefreshing && !IsReanalysisSelectionMode
             && SameSharedConsent(consent, _sharedConsent);
-        void ShowLookupFailure()
+        bool CanApplyLookup() => OwnsLookup() && ReferenceEquals(snapshot, ScanRoot);
+        void ShowLookupFailure(string outcome = "Failed")
         {
-            _sharedLookupIncomplete = true;
-            SetSharedLookupProgress(_sharedLookupProgress with { Stage = SharedLookupStage.Completed });
+            lookupSettled = true;
+            MarkSharedLookupIncomplete();
             SetSharedSummary(() => L.T("云端经验库查询失败，请检查网络后重试。扫描结果仍可正常查看。"));
             StatusText = SharedExperienceSummaryText;
             NotifySharedLookupSummary();
-            if (!currentRegionOnly) ScheduleSharedLookupRecovery();
+            RecordSharedLookupEvent(runtime, phase, outcome);
         }
 
         async Task HandleLookupOfflineAsync()
@@ -215,6 +253,14 @@ public sealed partial class MainWindowViewModel
             StatusText = SharedExperienceSummaryText;
             IsOfflineAlertVisible = true;
         }
+    }
+
+    private void MarkSharedLookupIncomplete(bool stopped = false)
+    {
+        _sharedLookupIncomplete = true;
+        _sharedLookupStopped = stopped;
+        SetSharedLookupProgress(_sharedLookupProgress with { Stage = SharedLookupStage.Completed });
+        NotifySharedRematchState();
     }
 
     private void NotifySharedLookupSummary()
@@ -228,7 +274,10 @@ public sealed partial class MainWindowViewModel
         var pending = _sharedLookupCancellation;
         _sharedLookupCancellation = null;
         _sharedLookupIncomplete = false;
+        _sharedLookupStopped = false;
+        _sharedLookupScopePath = null;
         IsLoadingSharedExperience = false;
+        NotifySharedRematchState();
         SetSharedLookupProgress(new(SharedLookupStage.Preparing, 0, 0, 0, 0));
         pending?.Cancel(); // The owning lookup disposes its own source after settling.
     }

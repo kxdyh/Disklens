@@ -2,6 +2,11 @@
 
 [English](CHANGELOG.en.md) · [官网下载与历史版本](https://disklens.site/#releases)
 
+## 1.1.2 — 2026-11-18
+
+- 云端经验匹配期间，可点击「停止匹配」或直接关闭应用。
+- 匹配失败或未完成时，已取得的结果会保留。需要时可点击「重试匹配」，应用不会自动重试。
+
 ## 1.1.1 — 2026-11-18（源码发布）
 
 - 公开 Windows 客户端、扫描与分析核心以及云端经验公共服务的源码，按 [PolyForm Noncommercial License 1.0.0](LICENSE) 提供。

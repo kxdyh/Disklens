@@ -48,7 +48,7 @@ public sealed partial class MainWindowViewModel
     {
         if (!IsReanalysisSelectionMode)
         {
-            CancelSharedLookup();
+            StopSharedExperienceLookup();
             _reanalysisSelectionSnapshot = ScanRoot;
             _isReanalysisSelectionMode = true;
             NotifyReanalysisSelection();

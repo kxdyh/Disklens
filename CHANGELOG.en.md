@@ -2,6 +2,11 @@
 
 [简体中文](CHANGELOG.md) · [Website & release archive](https://disklens.site/#releases)
 
+## 1.1.2 — 2026-11-18
+
+- Select **Stop matching** or close the app while cloud experience matching is in progress.
+- If matching fails or is incomplete, results already found remain available. Select **Retry matching** when you are ready. DiskLens no longer retries automatically.
+
 ## 1.1.1 — 2026-11-18 (source release)
 
 - Publish the Windows client, scan and AI core, and public cloud service under the [PolyForm Noncommercial License 1.0.0](LICENSE).

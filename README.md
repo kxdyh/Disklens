@@ -12,7 +12,7 @@ Windows 10 / 11 · x64 · 免费使用
 
 </div>
 
-> **下载与源码分别发布。** 最新正式安装包以 [官网](https://disklens.site/) 为准；[1.0.0 预览版](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) 仍可从历史发行下载。
+> **当前版本：1.1.2。** [官网下载安装包](https://disklens.site/) · [更新日志](CHANGELOG.md)。[1.0.0 预览版](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) 仍可从历史发行下载。
 
 ![DiskLens 扫描与日夜主题演示](assets/demos/scan-day-night.gif)
 

@@ -24,6 +24,18 @@ public partial class MainWindow
             await viewModel.RematchCurrentSharedExperienceAsync();
     }
 
+    private void StopSharedExperienceLookup_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+            viewModel.StopSharedExperienceLookup();
+    }
+
+    private async void RetrySharedExperienceLookup_OnClick(object sender, RoutedEventArgs e)
+    {
+        if (DataContext is MainWindowViewModel viewModel)
+            await viewModel.RetrySharedExperienceLookupAsync();
+    }
+
     private async void LocalAnalysisMemory_OnClick(object sender, RoutedEventArgs e)
     {
         if (SharedRuntime is null) return;

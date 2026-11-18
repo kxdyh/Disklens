@@ -136,7 +136,7 @@ public sealed class SharedKnowledgeRuntime : IDisposable
         var lookupExtractor = Extractor is SharedFingerprintExtractor concrete
             ? await concrete.CreateLookupExtractorAsync(cancellationToken).ConfigureAwait(false) : null;
         ReportLookupProgress(progress, new(SharedLookupStage.DownloadingIndex, 0, 0, 0, 0));
-        var (sharedPathIndex, indexNetworkUnavailable) = await DownloadLookupIndexAsync(progress, cancellationToken,
+        var (sharedPathIndex, indexNetworkUnavailable) = await DownloadLookupIndexAsync(cancellationToken,
             forceRefreshPathIndex).ConfigureAwait(false);
         var candidates = SharedLookupCandidateBuilder.Build(root, cancellationToken);
         ReportLookupProgress(progress, new(SharedLookupStage.Matching, 0, candidates.Count, 0, 0));
@@ -156,11 +156,11 @@ public sealed class SharedKnowledgeRuntime : IDisposable
         catch (Exception ex) when (ex is OperationCanceledException or System.Net.Http.HttpRequestException
             or IOException or System.Text.Json.JsonException or UnauthorizedAccessException or CryptographicException)
         { recovery = (true, false); }
-        if (recovery.Changed)
+        if (recovery.Changed && sharedPathIndex is { IsComplete: true })
         {
             // Upload invalidates the client's index cache. Include the originals
             // just upgraded to public keys in this same resolution pass.
-            (sharedPathIndex, indexNetworkUnavailable) = await DownloadLookupIndexAsync(progress, cancellationToken).ConfigureAwait(false);
+            (sharedPathIndex, indexNetworkUnavailable) = await DownloadLookupIndexAsync(cancellationToken).ConfigureAwait(false);
         }
         if (sharedPathIndex is not { IsComplete: true })
         {
@@ -173,7 +173,8 @@ public sealed class SharedKnowledgeRuntime : IDisposable
         var lookupPipeline = new SharedKnowledgePipeline(Store, lookupExtractor ?? Extractor, Client,
             networkAvailability: NetworkAvailability, requiresNetwork: !Endpoint.IsLoopback);
         var batchProgress = new LookupBatchProgress(progress, candidates.Count);
-        var resolution = await lookupPipeline.ResolveAsync(candidates, cancellationToken, sharedPathIndex, batchProgress).ConfigureAwait(false);
+        var resolution = await lookupPipeline.ResolveAsync(candidates, cancellationToken, sharedPathIndex,
+            batchProgress, retryFailedBatches: false).ConfigureAwait(false);
         foreach (var result in resolution.ResultsByPath.Values)
             if (result.SharedEntry is { } entry)
                 _legacyRecoveryAttempts.TryAdd(consent.Epoch + "|" + entry.Key, 0);
@@ -186,32 +187,21 @@ public sealed class SharedKnowledgeRuntime : IDisposable
     }
 
     private async Task<(SharedPathIndex? Index, bool NetworkUnavailable)> DownloadLookupIndexAsync(
-        IProgress<SharedLookupProgress>? progress, CancellationToken cancellationToken, bool forceRefresh = false)
+        CancellationToken cancellationToken, bool forceRefresh = false)
     {
-        var networkUnavailable = false;
-        for (var attempt = 0; attempt < 2; attempt++)
+        try
         {
-            if (attempt > 0)
-            {
-                if (!Endpoint.IsLoopback && !NetworkAvailability.IsNetworkAvailable) break;
-                ReportLookupProgress(progress, new(SharedLookupStage.Retrying, 0, 0, 0, 0));
-            }
-            try
-            {
-                var index = await (forceRefresh
-                    ? Client.RefreshSharedPathIndexAsync(cancellationToken)
-                    : Client.GetSharedPathIndexAsync(cancellationToken)).ConfigureAwait(false);
-                if (index is { IsComplete: true }) return (index, false);
-            }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
-            catch (Exception ex) when (ex is OperationCanceledException or System.Net.Http.HttpRequestException
-                or IOException or System.Text.Json.JsonException)
-            {
-                networkUnavailable = !Endpoint.IsLoopback
-                    && NetworkFailureClassifier.IsOffline(ex, NetworkAvailability);
-            }
+            var index = await (forceRefresh
+                ? Client.RefreshSharedPathIndexAsync(cancellationToken, retryTransientFailure: false)
+                : Client.GetSharedPathIndexAsync(cancellationToken, retryTransientFailure: false)).ConfigureAwait(false);
+            return (index is { IsComplete: true } ? index : null, false);
         }
-        return (null, networkUnavailable);
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
+        catch (Exception ex) when (ex is OperationCanceledException or System.Net.Http.HttpRequestException
+            or InvalidDataException or IOException or System.Text.Json.JsonException)
+        {
+            return (null, !Endpoint.IsLoopback && NetworkFailureClassifier.IsOffline(ex, NetworkAvailability));
+        }
     }
 
     private sealed class LookupBatchProgress(IProgress<SharedLookupProgress>? progress, int total)

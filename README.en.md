@@ -12,7 +12,7 @@ Windows 10 / 11 · x64 · Free for noncommercial use
 
 </div>
 
-> **Source code and installers are published separately.** See the [website](https://disklens.site/) for the latest official installer. The [1.0.0 preview](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) remains available in release history.
+> **Current version: 1.1.2.** [Download from the official website](https://disklens.site/) · [Changelog](CHANGELOG.en.md). The [1.0.0 preview](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) remains available in release history.
 
 ![DiskLens scanning in light and dark themes](assets/demos/scan-day-night.gif)
 

@@ -1840,7 +1840,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             if (providerOffline || !providerOptions.IsConfigured) return;
         }
 
-        CancelSharedLookup();
+        StopSharedExperienceLookup();
         _analysisCancellationTokenSource?.Cancel();
         _analysisCancellationTokenSource = new CancellationTokenSource();
 
@@ -2312,9 +2312,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         string? currentPathOverride = null,
         string? selectedPathOverride = null,
         Func<bool>? canApplySnapshot = null,
-        Action? beforeApplySnapshot = null)
+        Action? beforeApplySnapshot = null,
+        CancellationToken cancellationToken = default)
     {
-        var nodeIndex = await Task.Run(() => FileSystemNodeIndex.Build(root)).ConfigureAwait(true);
+        var nodeIndex = await Task.Run(() => FileSystemNodeIndex.Build(root, cancellationToken), cancellationToken).ConfigureAwait(true);
         if (_isDisposed || (canApplySnapshot is not null && !canApplySnapshot()))
         {
             return false;
@@ -3440,20 +3441,23 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
             : parentPath;
     }
 
-    private static FileSystemNode ApplyAnalysisResults(FileSystemNode node, IReadOnlyList<AiAnalysisResult> results)
+    private static FileSystemNode ApplyAnalysisResults(FileSystemNode node, IReadOnlyList<AiAnalysisResult> results,
+        CancellationToken cancellationToken = default)
     {
         var map = results
             .GroupBy(result => result.Path, StringComparer.Ordinal)
             .ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
-        return ApplyAnalysisResults(node, map);
+        return ApplyAnalysisResults(node, map, cancellationToken);
     }
 
-    private static FileSystemNode ApplyAnalysisResults(FileSystemNode node, IReadOnlyDictionary<string, AiAnalysisResult> results)
+    private static FileSystemNode ApplyAnalysisResults(FileSystemNode node, IReadOnlyDictionary<string, AiAnalysisResult> results,
+        CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         FileSystemNode[]? changedChildren = null;
         for (var index = 0; index < node.Children.Count; index++)
         {
-            var child = ApplyAnalysisResults(node.Children[index], results);
+            var child = ApplyAnalysisResults(node.Children[index], results, cancellationToken);
             if (ReferenceEquals(child, node.Children[index])) continue;
             changedChildren ??= node.Children.ToArray();
             changedChildren[index] = child;

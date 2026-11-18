@@ -51,6 +51,32 @@ public sealed class SharedClientTests
         await Assert.ThrowsAsync<InvalidDataException>(() => client.RegisterAsync());
     }
 
+    [Theory]
+    [InlineData("/v1/path-index")]
+    [InlineData("/v1/query")]
+    public async Task Manual_matching_does_not_resend_a_failed_read(string path)
+    {
+        var calls = 0;
+        var now = DateTimeOffset.UtcNow;
+        var index = JsonSerializer.Serialize(new { version = 1, shapes = Array.Empty<string>(), complete = true,
+            builtAt = now, expiresAt = now.AddMinutes(3) });
+        using var client = new SharedExperienceClient(new Uri("http://127.0.0.1:8791/"), new Handler(request =>
+        {
+            Assert.Equal(path, request.RequestUri!.AbsolutePath);
+            return Task.FromResult(++calls == 1 ? Reply("{}", HttpStatusCode.ServiceUnavailable)
+                : Reply(path == "/v1/query" ? "{\"items\":[]}" : index));
+        }));
+        Task ReadAsync() => path == "/v1/query"
+            ? client.QueryAsync(new("installation", "synthetic-token", 1), 1,
+                [new("android-sdk", "36", "sdk-temp", "cache-only-v1")], default, retryTransientFailure: false)
+            : client.RefreshSharedPathIndexAsync(default, retryTransientFailure: false);
+
+        await Assert.ThrowsAsync<HttpRequestException>(ReadAsync);
+        Assert.Equal(1, calls);
+        await ReadAsync();
+        Assert.Equal(2, calls);
+    }
+
     [Fact]
     public async Task Parses_worker_numeric_rule_version()
     {
