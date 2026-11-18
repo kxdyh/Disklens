@@ -6,13 +6,13 @@
 
 A visual disk space analyzer for Windows, with concurrent scans and optional AI assistance.
 
-[Website & download](https://disklens.site/) · [Latest release](https://github.com/kxdyh/Disklens/releases) · [Feedback](https://github.com/kxdyh/Disklens/issues) · [简体中文](README.md)
+[Website & download](https://disklens.site/) · [Release history](https://github.com/kxdyh/Disklens/releases) · [Feedback](https://github.com/kxdyh/Disklens/issues) · [简体中文](README.md)
 
-Windows 10 / 11 · x64 · Currently closed source
+Windows 10 / 11 · x64 · Free for noncommercial use
 
 </div>
 
-> **Download status: version 1.1 is paused. The currently available version is the 1.0.0 preview.** The 1.1 implementation is being revised. This page offers no 1.1 package and does not recommend enabling its shared-experience test feature. Use the [1.0 release page](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) or [download the 1.0 ZIP directly](https://github.com/kxdyh/Disklens/releases/download/v2026.11.06-preview/DiskLens-win-x64-latest.zip).
+> **Source code and installers are published separately.** See the [website](https://disklens.site/) for the latest official installer. The [1.0.0 preview](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) remains available in release history.
 
 ![DiskLens scanning in light and dark themes](assets/demos/scan-day-night.gif)
 
@@ -46,12 +46,12 @@ These landscape recordings show the app in light and dark themes. They have been
 
 ## Download & get started
 
-1. Get the Windows x64 release from the [website](https://disklens.site/) or [GitHub Releases](https://github.com/kxdyh/Disklens/releases).
-2. Close the previous version, **extract the entire ZIP into a folder**, then run `DiskLens.App.exe` and accept the administrator prompt. Keep the accompanying instructions and AI prompt template in that folder.
+1. Download the current Windows x64 installer from the [website](https://disklens.site/).
+2. Close any running DiskLens instance and run the installer. For an older ZIP release, extract it fully before running `DiskLens.App.exe`.
 3. Choose a drive or folder to scan, then browse its space usage when the scan finishes.
 4. To use AI assistance, configure your own service endpoint, model, and API key in Settings, then explicitly request an analysis.
 
-The release targets Windows 10 / 11 x64 and includes its runtime; no separate .NET installation is needed. Check the corresponding release notes for its version and file checksums. The extracted program contents are also available in [`distribution/win-x64/`](distribution/win-x64/).
+The package includes its runtime and supports Windows 10 / 11 x64. Shared experience is off by default; see [how matching and privacy work](SHARED-EXPERIENCE.en.md).
 
 ## Data & file operations
 
@@ -68,11 +68,30 @@ For size discrepancies, include the scan scope, the comparison tool, and whether
 
 If you cannot access Issues, or your report contains information unsuitable for public sharing, contact **[kxdyongheng@gmail.com](mailto:kxdyongheng@gmail.com)**.
 
-## About this repository
+## Source code and license
 
-This repository hosts DiskLens releases, product documentation, demos, and feedback. **DiskLens is currently closed source. Product source code is not included, and no open-source license is granted.** See [NOTICE.md](NOTICE.md) for the copyright and third-party notice.
+DiskLens is **free for noncommercial use**. The DiskLens source in this repository is provided under the [PolyForm Noncommercial License 1.0.0](LICENSE). Commercial use requires separate permission from the author; see [NOTICE.md](NOTICE.md) for contact details. AI providers may charge separately for their services.
 
-When the application source is opened, the official release's support component and reward-code image will remain privately maintained by the author. Source builds can omit that component and still build and use the core features. To prevent replacement of the reward code, changes to the official payment destination are not accepted through pull requests; the author reviews and maintains it.
+- [Windows client](src/DiskLens.App) and [scanning and analysis core](src/DiskLens.Core)
+- [Public cloud experience service](services/shared-knowledge)
+- [English user guide](docs/releases/1.1-UserGuide.en.md) · [中文使用指南](docs/releases/1.1-使用说明.md)
+
+### Build the Windows client
+
+On Windows, install a .NET 8 SDK compatible with `global.json`, then run from the repository root:
+
+```powershell
+dotnet build DiskLens.sln -c Release
+dotnet publish src/DiskLens.App/DiskLens.App.csproj -c Release -r win-x64 --self-contained true -o artifacts/win-x64
+```
+
+`artifacts/win-x64/DiskLens.App.exe` is the standalone source build. Include [LICENSE](LICENSE) and [NOTICE.md](NOTICE.md) when redistributing it.
+
+### Privately maintained components
+
+The author maintains a private operations console only to publish releases and announcements and control new enrollments in cloud experience sharing. Enrollment controls do not affect existing participants. Neither the console nor its management credentials ships with the source or user installer.
+
+The official release's donation component and reward code are maintained separately. Source builds still build and provide the core features. To prevent payment destination changes, the author maintains the official donation entry directly and does not accept pull requests that change it.
 
 By [kxdyh](https://github.com/kxdyh) · [disklens.site](https://disklens.site/)
 

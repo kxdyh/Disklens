@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="10.0.1" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.5.1" />
+    <PackageReference Include="xunit" Version="2.9.3" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="3.1.5" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+    <Using Include="DiskLens.App.Localization.L" Alias="L" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\DiskLens.Core\DiskLens.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\src\DiskLens.App\Models\AppSettings.cs" Link="AppSettings.cs" />
+    <Compile Include="..\..\src\DiskLens.App\Models\ThemeCatalog.cs" Link="ThemeCatalog.cs" />
+    <Compile Include="..\..\src\DiskLens.App\Models\DriveScanOption.cs" Link="DriveScanOption.cs" />
+    <Compile Include="..\..\src\DiskLens.App\Models\VisualExplorerPresentation.cs" Link="VisualExplorerPresentation.cs" />
+    <Compile Include="..\..\src\DiskLens.App\Localization\L.cs" Link="Localization\L.cs" />
+    <EmbeddedResource Include="..\..\src\DiskLens.App\Localization\keys.json" LogicalName="DiskLens.App.Localization.keys.json" />
+    <EmbeddedResource Include="..\..\src\DiskLens.App\Localization\en.json" LogicalName="DiskLens.App.Localization.en.json" />
+  </ItemGroup>
+
+</Project>

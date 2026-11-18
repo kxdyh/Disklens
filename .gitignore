@@ -1,4 +1,4 @@
-# This repository contains only reviewed release files, docs, and demos.
+# Local development files
 *.pdb
 *.log
 .env
@@ -10,3 +10,25 @@ obj/
 node_modules/
 .vs/
 .idea/
+
+# Build outputs and local state
+/artifacts/
+/TestResults/
+.temp-tests/
+**/.wrangler/
+**/.npm-cache/
+**/.local-state/
+*.exe
+*.zip
+*.7z
+*.mp4
+*.db
+*.sqlite
+*.sqlite-wal
+*.sqlite-shm
+*.pfx
+*.p12
+*.pem
+*.key
+.dev.vars
+.dev.vars.*

@@ -1,0 +1,17 @@
+{
+  "name": "disklens-shared-knowledge-beta",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs",
+    "dev": "wrangler dev --local --port 8791 --persist-to .local-state",
+    "db:init": "wrangler d1 migrations apply shared-knowledge-local --local --persist-to .local-state",
+    "check": "tsc --noEmit",
+    "test:http": "node test/local-http.mjs"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "wrangler": "4.158.0"
+  }
+}

@@ -1,32 +1,19 @@
-# Shared-experience research notes and validation boundaries
+# File purpose experience sharing (beta)
 
-> **Unreleased / implementation under revision.** Shared experience is not a feature offered in the currently available 1.0 download. Version 1.1 downloads are paused, and we do not recommend enabling its existing implementation limited to selected directory roles. The following material is retained only as historical research and validation notes, not activation instructions or a recommendation for current use.
+[简体中文](SHARED-EXPERIENCE.md) · [Product guide](README.en.md) · [User guide](docs/releases/1.1-UserGuide.en.md)
 
-[简体中文](SHARED-EXPERIENCE.md) · [Product overview](README.en.md) · [Download status](README.en.md)
+Sharing is off by default. Read the agreement and review the sharing scope in the app before deciding whether to join. Sharing past analyses requires a separate choice. Local scans and your own configured AI service remain available when sharing is off.
 
-Shared experience is off by default and covers only supported software directory roles. It does not make every file on a disk free to analyze. When identity and structure match and mature cloud consensus exists, reuse can avoid a repeated personal AI request. Otherwise, the user's own service and API key are still required.
+## How matching works
 
-## Verify the role before reusing a conclusion
+After a scan, the app downloads the public path index and checks scan results locally. It groups matching normalized fingerprints before retrieving conclusions in batches. The size threshold for AI analysis does not apply to cloud matching. The service returns published conclusions only when the match requirements are met. Identical file names can have different purposes.
 
-Matching requires verified software identity, the same major version, a matching root-relative directory role and a complete allowlisted structure. Initial roles are controlled Android SDK temporary directories, emulator runtime dependencies and WeGame temporary directories. Names, similar path suffixes or custom folders alone are insufficient. Incomplete reads, mixed personal content, reparse links and protected content prevent reuse.
+Matched conclusions show their cloud source. Other items can use valid personal history or your own AI service after you confirm what to submit. Downloading or matching experience does not call the model.
 
-The order is local protection → valid personal cache → shared experience → personal AI. Results show their source and retain reanalysis. Personal cache uses full analysis context, expires 30 days after the original analysis without extending on reuse, and is capped at 20,000 entries / 32 MiB.
+## Sharing and withdrawal
 
-## Users control sharing
+Known conclusions rated Medium or High confidence can enter the upload queue if they pass privacy checks. Shared data includes anonymized public fingerprints, structured categories and recommendations, filtered Chinese and English purpose text, and records needed for consent and withdrawal. The app does not upload file contents, model API keys, complete private paths, or raw scan lists.
 
-Enable only after reading the agreement, consenting to future contributions and previewing scope. Historical contributions require a separate choice. Exclusions cover descendants and related parent summaries. Review contributions, withdraw one or all, and export management credentials for recovery.
+You can exclude folders, disable sharing, and review or withdraw your contributions. Disabling sharing stops future queries and uploads. Previously uploaded contributions can be withdrawn separately. Keep recovery credentials private. DiskLens does not delete files automatically; AI and shared conclusions are guidance only.
 
-The cloud retains controlled roles, structured conclusions and minimum fields for consent, withdrawal and replay prevention. Contributions exclude file contents, full personal paths and free-text reasons. Do not post personal directory details or management credentials in public issues.
-
-Consensus requires at least 5 eligible installation identifiers, 72 hours of observation and 90% agreement, plus conflict checks. Identifiers do not prove independent people, and thresholds do not guarantee correctness. More eligible contributions may reduce repeated API costs for supported, reliably matched directories; full coverage or zero cost is not guaranteed. AI and shared conclusions are advisory. Confirm purpose and back up important data before deletion.
-
-## Validation on November 7, 2026
-
-| Validation | Result | Scope |
-| --- | --- | --- |
-| 100 fixed synthetic path/structure variants with an isolated mature fixture | 54/60 semantic positives matched; 0/40 false matches | Three roles and 3 mature test buckets; 6 valid emulator variants remain conservatively rejected |
-| Same list against the actual test cloud | 58 successful HTTPS queries, 42 local rejections, 0 accepted matches | Query route available; empty cloud has no eligible experience |
-| Independent read-only cloud audit | 0 contributions, 0 analysis receipts, 0 buckets; sole query identity disabled | No synthetic cloud contributions or consensus created |
-| Audit of 437 legacy personal AI entries | 0 eligible historical contributions | Missing original identity, source binding or full context is not fabricated |
-
-The 54/60 figure is not real-disk coverage, installation-discovery coverage or the amount of experience online. Tests use synthetic installation identities and directory trees, bypassing real scanning and candidate construction. The actual cloud test did not seed mature experience. Costs and coverage depend on local folders, supported structures, eligible contributions and the selected provider.
+The cloud service needs an internet connection and may be rate limited or unavailable. Cloudflare response times can vary on mainland China networks. Try again later. Report problems in [GitHub Issues](https://github.com/kxdyh/Disklens/issues) and remove private paths and keys from attachments.

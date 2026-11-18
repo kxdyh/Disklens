@@ -1,0 +1,17 @@
+{
+  "name": "disklens-shared-knowledge-local",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-11-07",
+  "workers_dev": false,
+  "preview_urls": false,
+  "d1_databases": [{
+    "binding": "DB",
+    "database_name": "shared-knowledge-local",
+    "database_id": "00000000-0000-0000-0000-000000000000",
+    "migrations_dir": "migrations"
+  }],
+  "vars": {
+    "SERVICE_MODE": "enabled"
+  },
+  "observability": { "enabled": false }
+}

@@ -2,9 +2,15 @@
 
 [简体中文](CHANGELOG.md) · [Website & release archive](https://disklens.site/#releases)
 
+## 1.1.1 — 2026-11-18 (source release)
+
+- Publish the Windows client, scan and AI core, and public cloud service under the [PolyForm Noncommercial License 1.0.0](LICENSE).
+- The client includes Chinese and English UI and analysis text, cloud path index matching, filtering by deletion advice, and announcements.
+- Fix gaps around the maximized window on affected Windows display setups. The [website](https://disklens.site/) lists the current official installer and update information.
+
 ## 1.1.0 — 2026-11-07 (downloads paused)
 
-**Version 1.1 is unavailable for download while its implementation is being revised. The currently available version is the [1.0.0 preview](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview).** The entries below preserve historical 1.1 changes and test records, not currently available features. We do not recommend enabling the existing shared-experience test limited to selected directory roles, and no 1.1 package is offered here.
+These are historical development and test notes. See the [current sharing guide](SHARED-EXPERIENCE.en.md) for how the feature works now.
 
 - Add shared experience (test), off by default: reuse requires verified software identity, major version, directory role and a complete allowlisted structure. Unmatched directories still need your own API.
 - Enable only after reading the agreement, consenting to future contributions and previewing scope. History is a separate choice; exclude folders, review contributions and withdraw one or all.
@@ -20,7 +26,7 @@
 - Add a Windows x64 installer while retaining the portable ZIP.
 - From 1.1 onward, check for newer releases at startup with concise notes and actions to dismiss, skip that exact version or visit the website. Version 1.0 has no update checker and requires one manual upgrade.
 
-The 1.1 installer and portable-package download links have been withdrawn. Use the 1.0.0 preview download below.
+The 1.1.0 candidate installers were withdrawn at the time.
 
 A later user-provided deepseek-flash billing screenshot showed about CNY 0.11 for 14:00–15:00. Per-request reconciliation was unavailable; the following historical estimates are not actual charges.
 
@@ -28,7 +34,7 @@ Historical AI usage and price estimate: DeepSeek Flash, medium thinking, Token-s
 
 ## 1.0.0 preview — 2026-11-06
 
-Currently available for download. Original release tag: `v2026.11.06-preview`, application build `ea80630`; the original 1.0 package is retained.
+Historical release. Original release tag: `v2026.11.06-preview`, application build `ea80630`; the original 1.0 package is retained.
 
 - Rectangular disk space visualization, folder navigation and pages of 50 items.
 - Up to 3 concurrent scans, with separate tabs, live progress and done states.

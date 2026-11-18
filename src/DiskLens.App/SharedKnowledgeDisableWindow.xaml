@@ -1,0 +1,41 @@
+<Window x:Class="DiskLens.App.SharedKnowledgeDisableWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:DiskLens.App.Localization"
+        Title="{loc:Text s381}" Width="460" SizeToContent="Height" ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Icon="Resources/Brand/DiskLens.ico"
+        Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource PrimaryTextBrush}"
+        FontFamily="Microsoft YaHei UI" FontSize="14" KeyboardNavigation.TabNavigation="Cycle">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource CardSubtleBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="20,11" />
+            <Setter Property="MinWidth" Value="104" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template">
+                <Setter.Value><ControlTemplate TargetType="Button">
+                    <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="8">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsKeyboardFocused" Value="True"><Setter Property="Opacity" Value="0.78" /></Trigger>
+                        <Trigger Property="IsEnabled" Value="False"><Setter Property="Opacity" Value="0.5" /></Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate></Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+    <StackPanel Margin="28">
+        <TextBlock FontSize="21" FontWeight="SemiBold" Text="{loc:Text s407}" TextWrapping="Wrap" />
+        <TextBlock Margin="0,12,0,0" Text="{loc:Text s288}" TextWrapping="Wrap" LineHeight="23" />
+        <TextBlock x:Name="StatusText" Margin="0,12,0,0" Visibility="Collapsed" TextWrapping="Wrap"
+                   Foreground="{DynamicResource SecondaryTextBrush}" AutomationProperties.LiveSetting="Polite" />
+        <StackPanel Margin="0,26,0,0" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button x:Name="KeepEnabledButton" Margin="0,0,10,0" Content="{loc:Text s116}" IsCancel="True" IsDefault="True" Click="KeepEnabled_OnClick" />
+            <Button x:Name="DisableSharingButton" Content="{loc:Text s133}" Click="Disable_OnClick"
+                    Background="{DynamicResource PrimaryButtonBrush}" Foreground="{DynamicResource PrimaryButtonTextBrush}" />
+        </StackPanel>
+    </StackPanel>
+</Window>

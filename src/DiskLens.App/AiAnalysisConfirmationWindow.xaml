@@ -1,0 +1,131 @@
+<Window x:Class="DiskLens.App.AiAnalysisConfirmationWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:DiskLens.App.Localization"
+        Title="{loc:Text s556}" Width="700" Height="668" MinWidth="460" MinHeight="480"
+        WindowStartupLocation="CenterOwner" ShowInTaskbar="False" Icon="Resources/Brand/DiskLens.ico"
+        Background="{DynamicResource CardBackgroundBrush}" Foreground="{DynamicResource PrimaryTextBrush}"
+        FontFamily="Microsoft YaHei UI" FontSize="14" KeyboardNavigation.TabNavigation="Cycle">
+    <Window.Resources>
+        <Style TargetType="TextBlock"><Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" /></Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBox">
+                <Grid>
+                    <ToggleButton Focusable="False" ClickMode="Press"
+                                  IsChecked="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}">
+                        <ToggleButton.Template><ControlTemplate TargetType="ToggleButton">
+                            <Border CornerRadius="6" Background="{Binding Background, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                    BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" />
+                        </ControlTemplate></ToggleButton.Template>
+                    </ToggleButton>
+                    <Grid Margin="10,0" IsHitTestVisible="False">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                        <ContentPresenter Content="{TemplateBinding SelectionBoxItem}" ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                                          VerticalAlignment="Center" TextElement.Foreground="{TemplateBinding Foreground}" />
+                        <Path Grid.Column="1" Margin="8,0,0,0" Width="8" Height="4" VerticalAlignment="Center"
+                              Data="M 0,0 L 4,4 L 8,0" Stroke="{DynamicResource SecondaryTextBrush}" StrokeThickness="1.5" />
+                    </Grid>
+                    <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True" Focusable="False"
+                           IsOpen="{TemplateBinding IsDropDownOpen}">
+                        <Border MinWidth="{Binding ActualWidth, RelativeSource={RelativeSource TemplatedParent}}" Padding="4" CornerRadius="6"
+                                Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1">
+                            <ScrollViewer CanContentScroll="True"><ItemsPresenter KeyboardNavigation.DirectionalNavigation="Contained" /></ScrollViewer>
+                        </Border>
+                    </Popup>
+                </Grid>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style TargetType="ComboBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" /><Setter Property="Padding" Value="10,8" />
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ComboBoxItem">
+                <Border x:Name="ChoiceSurface" Padding="{TemplateBinding Padding}" CornerRadius="4" Background="Transparent">
+                    <ContentPresenter TextElement.Foreground="{TemplateBinding Foreground}" />
+                </Border>
+                <ControlTemplate.Triggers><Trigger Property="IsHighlighted" Value="True">
+                    <Setter TargetName="ChoiceSurface" Property="Background" Value="{DynamicResource CardSubtleBackgroundBrush}" />
+                </Trigger></ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="Background" Value="{DynamicResource CardSubtleBackgroundBrush}" />
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="Padding" Value="20,12" /><Setter Property="MinWidth" Value="104" />
+            <Setter Property="BorderThickness" Value="0" /><Setter Property="Cursor" Value="Hand" />
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+                <Border Background="{TemplateBinding Background}" Padding="{TemplateBinding Padding}" CornerRadius="8">
+                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                </Border><ControlTemplate.Triggers>
+                    <Trigger Property="IsKeyboardFocused" Value="True"><Setter Property="Opacity" Value="0.8" /></Trigger>
+                    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Opacity" Value="0.86" /></Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="28">
+        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="Auto" /><RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+        <StackPanel><TextBlock FontSize="24" FontWeight="SemiBold" Text="{loc:Text s558}" />
+            <TextBlock Margin="0,8,0,0" Text="{loc:Text s98}" TextWrapping="Wrap"
+                       Foreground="{DynamicResource SecondaryTextBrush}" /></StackPanel>
+        <Border Grid.Row="1" Margin="0,20,0,0" Padding="16,12" CornerRadius="10" Background="{DynamicResource CardSubtleBackgroundBrush}">
+            <StackPanel><TextBlock Text="{loc:Text s160}" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}" />
+                <TextBlock x:Name="ScopePathText" Text="{Binding Preview.RootPath}" Margin="0,5,0,0" FontWeight="SemiBold"
+                           TextTrimming="CharacterEllipsis" ToolTip="{Binding Preview.RootPath}" />
+                <TextBlock Text="{loc:Bind SummaryText}" Margin="0,8,0,0" FontSize="12" TextWrapping="Wrap"
+                           Foreground="{DynamicResource SecondaryTextBrush}" /></StackPanel>
+        </Border>
+        <Grid Grid.Row="2" Margin="0,18,0,12"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="124" /></Grid.ColumnDefinitions>
+            <Grid><TextBox x:Name="SearchBox" Height="38" Padding="10,7" VerticalContentAlignment="Center"
+                     Background="{DynamicResource SurfaceBackgroundBrush}" Foreground="{DynamicResource PrimaryTextBrush}"
+                     BorderBrush="{DynamicResource BorderBrush}" TextChanged="Filter_OnChanged"
+                     AutomationProperties.Name="{loc:Text s367}" ToolTip="{loc:Text s368}" />
+                <TextBlock Text="{loc:Text s369}" Margin="11,0" VerticalAlignment="Center" IsHitTestVisible="False"
+                           Foreground="{DynamicResource SecondaryTextBrush}">
+                    <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers><DataTrigger Binding="{Binding Text, ElementName=SearchBox}" Value="">
+                            <Setter Property="Visibility" Value="Visible" />
+                        </DataTrigger></Style.Triggers>
+                    </Style></TextBlock.Style>
+                </TextBlock>
+            </Grid>
+            <ComboBox x:Name="TypeFilter" Grid.Column="1" Margin="10,0,0,0" VerticalContentAlignment="Center" Padding="8"
+                      SelectedIndex="0" SelectionChanged="Filter_OnChanged" AutomationProperties.Name="{loc:Text s304}">
+                <ComboBoxItem Content="{loc:Text s121}" /><ComboBoxItem Content="{loc:Text s378}" /><ComboBoxItem Content="{loc:Text s375}" />
+            </ComboBox>
+        </Grid>
+        <TextBlock x:Name="FilterCountText" Grid.Row="3" FontSize="12" Margin="0,0,0,8" Foreground="{DynamicResource SecondaryTextBrush}" />
+        <Grid Grid.Row="4" VerticalAlignment="Top">
+            <ListBox x:Name="CandidateList" MaxHeight="288" BorderThickness="0" Background="Transparent"
+                     Foreground="{DynamicResource PrimaryTextBrush}" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                     ScrollViewer.VerticalScrollBarVisibility="Auto" VirtualizingPanel.IsVirtualizing="True"
+                     ScrollViewer.CanContentScroll="True" AutomationProperties.Name="{loc:Text s150}">
+                <ListBox.ItemContainerStyle><Style TargetType="ListBoxItem">
+                    <Setter Property="Height" Value="72" /><Setter Property="Padding" Value="0" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="BorderThickness" Value="0" />
+                </Style></ListBox.ItemContainerStyle>
+                <ListBox.ItemTemplate><DataTemplate>
+                    <Border Margin="0,0,0,6" Padding="12,8" CornerRadius="8" Background="{DynamicResource CardSubtleBackgroundBrush}">
+                        <Grid><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+                            <StackPanel><TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{Binding Path}" ToolTip="{Binding Path}" TextTrimming="CharacterEllipsis" FontSize="12" Margin="0,4,12,0"
+                                           Foreground="{DynamicResource SecondaryTextBrush}" /></StackPanel>
+                            <TextBlock Grid.Column="1" Text="{Binding SizeText}" VerticalAlignment="Center" FontSize="12" />
+                        </Grid>
+                    </Border>
+                </DataTemplate></ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock x:Name="EmptyMessage" Visibility="Collapsed" Margin="12,18" Text="{loc:Text s529}" Foreground="{DynamicResource SecondaryTextBrush}" />
+        </Grid>
+        <Grid Grid.Row="5" Margin="0,18,0,0"><Grid.ColumnDefinitions><ColumnDefinition Width="*" /><ColumnDefinition Width="Auto" /></Grid.ColumnDefinitions>
+            <TextBlock Text="{loc:Bind BudgetNote}" Margin="0,0,14,0" FontSize="12" TextWrapping="Wrap" VerticalAlignment="Center"
+                       Foreground="{DynamicResource SecondaryTextBrush}" />
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <Button Content="{loc:Text s193}" IsCancel="True" Margin="0,0,10,0" />
+                <Button x:Name="ConfirmButton" Content="{loc:Bind ConfirmButtonText}" IsDefault="True" Click="Confirm_OnClick"
+                        Background="{DynamicResource PrimaryButtonBrush}" Foreground="{DynamicResource PrimaryButtonTextBrush}" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>

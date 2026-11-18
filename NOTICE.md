@@ -1,17 +1,17 @@
-# 版权与分发说明 / Copyright & distribution notice
+# 版权与许可说明 / Copyright and licensing notice
 
-Copyright © 2026 kxdyh. All rights reserved.
+Required Notice: Copyright © 2026 kxdyh.
 
-DiskLens 当前暂时闭源。本仓库用于版本分发、产品文档、演示与问题反馈，未提供产品源码，未授予开源许可证。仓库可被访问或文件可被下载，不代表相关内容已采用 MIT、Apache、GPL 或其他开源许可。
+本仓库中 DiskLens 的自有源码与随项目提供的自有构建资源按 [PolyForm Noncommercial License 1.0.0](LICENSE) 提供。商业使用需另行获得作者授权。第三方组件仍适用各自许可，官方发行包随附 `THIRD-PARTY-NOTICES.txt`。
 
-发布包中使用的第三方组件，其权利与适用条款仍归各自权利人所有。此说明不替代第三方组件的许可。
+运营控制台及官方发行版的「为爱发电」组件和赞赏码由作者独立维护，不属于公开源码。运营控制台用于发布版本、发布公告、控制新用户加入；加入控制不影响已开启云端经验的用户。
 
-授权或分发方面的咨询请联系：[2297782581@qq.com](mailto:2297782581@qq.com)。
+商业授权咨询：[2297782581@qq.com](mailto:2297782581@qq.com)。
 
 ---
 
-DiskLens is currently closed source. This repository is used for releases, product documentation, demos, and feedback. Product source code is not included, and no open-source license is granted. Access to this repository or the ability to download a file does not place the content under MIT, Apache, GPL, or any other open-source license.
+DiskLens source code and first-party build assets in this repository are provided under the [PolyForm Noncommercial License 1.0.0](LICENSE). Commercial use requires separate permission from the author. Third-party components retain their own licenses; official releases include `THIRD-PARTY-NOTICES.txt`.
 
-Third-party components included in a release remain subject to their respective rights and terms. This notice does not replace their licenses.
+The operations console and the official release's donation component and reward code are maintained separately from the public source. The console publishes releases and announcements and controls new enrollments without affecting existing participants.
 
-For licensing or distribution inquiries, contact [2297782581@qq.com](mailto:2297782581@qq.com).
+For commercial licensing inquiries, contact [2297782581@qq.com](mailto:2297782581@qq.com).

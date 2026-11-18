@@ -1,0 +1,14 @@
+<svg viewBox="0 0 640 550" role="img" aria-label="蓝色立体文件夹与有序纸片组成的原创图形，非文件数据">
+<defs><linearGradient id="blue" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#5f88e4"/><stop offset="1" stop-color="#3260c7"/></linearGradient><linearGradient id="paper" x2=".7" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#edf1f8"/></linearGradient><filter id="soft"><feGaussianBlur stdDeviation="15"/></filter></defs>
+<ellipse cx="325" cy="452" rx="210" ry="20" fill="#2b4776" opacity=".1" filter="url(#soft)"/>
+<path d="M127 231q0-14 16-14h90l23 24h218q17 0 17 18v133q0 21-21 21H143q-16 0-16-19Z" fill="#adc5f5" stroke="#92b3ee"/>
+<g class="paper paper-back"><rect x="165" y="148" width="238" height="221" rx="14" fill="#e0e7f4" stroke="#c8d4e9" transform="rotate(-10 284 259)"/><path d="m198 194 126-22m-121 46 89-16" stroke="#b6c6e0" stroke-width="7" stroke-linecap="round"/></g>
+<g class="paper paper-middle"><rect x="219" y="115" width="218" height="240" rx="14" fill="url(#paper)" stroke="#cbd6e8" transform="rotate(7 328 235)"/><rect x="251" y="154" width="62" height="53" rx="10" fill="#e0e8f9"/><path d="m268 185 12-12 12 12m-12-12v25" fill="none" stroke="#9ab3de" stroke-width="2"/><path d="M251 232h139m-139 21h103m-103 21h120" stroke="#cdd7e8" stroke-width="6" stroke-linecap="round"/></g>
+<g class="paper paper-front"><rect x="161" y="205" width="240" height="148" rx="14" fill="url(#paper)" stroke="#c7d3e7" transform="rotate(-3 281 279)"/><rect x="186" y="228" width="35" height="42" rx="7" fill="#edf1f8" stroke="#d4deed"/><path d="M192 240h17m-17 7h11" stroke="#a5b9da" stroke-width="2" stroke-linecap="round"/><path d="M237 235h126m-126 17h87" stroke="#c7d3e7" stroke-width="6" stroke-linecap="round"/></g>
+<path d="M111 302q-3-20 17-20h112q10 0 17 8l13 14h225q19 0 15 21l-16 94q-3 18-22 18H143q-17 0-20-17Z" fill="url(#blue)" stroke="#3f6fce"/>
+<path d="M128 292h106q11 0 18 8l15 14h226" fill="none" stroke="#c4d9ff" stroke-opacity=".5" stroke-width="1.5"/>
+<path d="M151 335v60q0 10 11 10h67" fill="none" stroke="#cce0ff" stroke-opacity=".25"/>
+<circle cx="435" cy="376" r="16" fill="#dfeaff" fill-opacity=".19"/><path d="m428 376 5 5 9-10" fill="none" stroke="#e3eeff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+<g class="note-card"><rect x="407" y="162" width="145" height="78" rx="12" fill="#fff" stroke="#dbe2ee"/><circle cx="434" cy="188" r="9" fill="#e5edff"/><path d="M433 182v12m-3-9h6m-6 6h6" stroke="#6a8dd0"/><path d="M455 185h73m-73 11h48m-105 22h129" stroke="#d5deec" stroke-width="4" stroke-linecap="round"/></g>
+<g class="order-caption"><text x="340" y="64" fill="#788a9f" font-size="11" font-family="Microsoft YaHei">从杂乱，到清晰</text><path d="M441 60h76m-2-3 4 3-4 3" stroke="#a3b5cc" fill="none"/></g>
+<path d="M122 469h380" stroke="#dce3ee"/><text x="221" y="492" fill="#8a9bb0" font-size="10" letter-spacing="2" font-family="Segoe UI">A LITTLE SPACE. A CLEARER MIND.</text></svg>

@@ -6,13 +6,13 @@
 
 Windows 磁盘空间可视化工具，支持多任务扫描与可选的 AI 辅助分析。
 
-[官网与下载](https://disklens.site/) · [最新版本](https://github.com/kxdyh/Disklens/releases) · [问题反馈](https://github.com/kxdyh/Disklens/issues) · [English](README.en.md)
+[官网与下载](https://disklens.site/) · [历史发行](https://github.com/kxdyh/Disklens/releases) · [问题反馈](https://github.com/kxdyh/Disklens/issues) · [English](README.en.md)
 
-Windows 10 / 11 · x64 
+Windows 10 / 11 · x64 · 免费使用
 
 </div>
 
-> **下载状态：1.1 暂停下载，当前可下载版本为 1.0.0 预览版。** 1.1 的实现正在修订，本文不提供 1.1 安装包，也不建议启用其中的共享经验测试功能。请使用 [1.0 下载页](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) 或 [直接下载 1.0 ZIP](https://github.com/kxdyh/Disklens/releases/download/v2026.11.06-preview/DiskLens-win-x64-latest.zip)。
+> **下载与源码分别发布。** 最新正式安装包以 [官网](https://disklens.site/) 为准；[1.0.0 预览版](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) 仍可从历史发行下载。
 
 ![DiskLens 扫描与日夜主题演示](assets/demos/scan-day-night.gif)
 
@@ -46,12 +46,12 @@ DiskLens 将文件与文件夹的磁盘占用绘制为矩形方块。先找到�
 
 ## 下载与开始使用
 
-1. 从 [官网](https://disklens.site/) 或 [GitHub Releases](https://github.com/kxdyh/Disklens/releases) 获取 Windows x64 发布包。
-2. 退出旧版，将 ZIP **完整解压到一个文件夹**，运行其中的 `DiskLens.App.exe`，按系统提示确认管理员权限。保留同目录的说明和 AI 提示词模板。
+1. 从 [官网](https://disklens.site/) 下载当前的 Windows x64 安装包。
+2. 关闭正在运行的 DiskLens，再运行安装包。若使用旧版 ZIP，请完整解压后运行其中的 `DiskLens.App.exe`。
 3. 选择要扫描的磁盘或文件夹，等待扫描完成后逐层浏览占用情况。
 4. 如需 AI 辅助分析，在设置中配置自己的服务地址、模型和 API Key，再主动发起分析。
 
-发布包适用于 Windows 10 / 11 x64，包含运行环境，无需另外安装 .NET。程序随版本发布，具体版本与文件校验值请查看对应 Release 的说明。压缩包内的程序内容也保存在 [`distribution/win-x64/`](distribution/win-x64/)。
+发布包适用于 Windows 10 / 11 x64，已包含运行环境。共享经验默认关闭；[共享经验说明](SHARED-EXPERIENCE.md) 介绍了匹配范围、隐私和开启方式。
 
 ## 数据与操作边界
 
@@ -68,11 +68,30 @@ DiskLens 将文件与文件夹的磁盘占用绘制为矩形方块。先找到�
 
 如无法访问 Issues，或问题涉及不宜公开的内容，可联系 **[2297782581@qq.com](mailto:2297782581@qq.com)**。
 
-## 关于本仓库
+## 源码与许可
 
-本仓库用于 DiskLens 的版本分发、产品说明、演示素材与问题反馈。**DiskLens 当前暂时闭源，本仓库不提供产品源码，也未授予开源许可证。** 版权所有与第三方组件说明见 [NOTICE.md](NOTICE.md)。
+DiskLens **可免费用于非商业用途**。本仓库的 DiskLens 源码按 [PolyForm Noncommercial License 1.0.0](LICENSE) 提供。商业用途需要另行取得作者授权，请通过 [版权说明](NOTICE.md) 中的联系方式咨询。配置的 AI 服务可能由服务商单独收费。
 
-后续开放应用源码时，官方发行版的“为爱发电”实现和赞赏码资源仍由作者私有维护，不随应用源码公开；源码版不包含该组件也能构建、使用核心功能。为避免赞赏码被替换，官方收款入口不接受 PR 修改，由作者审核维护。
+- [Windows 客户端](src/DiskLens.App)、[扫描与分析核心](src/DiskLens.Core)
+- [云端经验公开服务](services/shared-knowledge)
+- [中文使用指南](docs/releases/1.1-使用说明.md) · [English user guide](docs/releases/1.1-UserGuide.en.md)
+
+### 构建 Windows 客户端
+
+在 Windows 安装与 `global.json` 兼容的 .NET 8 SDK，到仓库根目录执行：
+
+```powershell
+dotnet build DiskLens.sln -c Release
+dotnet publish src/DiskLens.App/DiskLens.App.csproj -c Release -r win-x64 --self-contained true -o artifacts/win-x64
+```
+
+`artifacts/win-x64/DiskLens.App.exe` 是可独立运行的源码构建版。需要转载或分发时，请一并提供 [LICENSE](LICENSE) 和 [NOTICE.md](NOTICE.md)。
+
+### 作者独立维护的组件
+
+作者保留不公开的运营控制台，仅用于发布新版本、发布公告和控制云端经验功能的新用户加入。加入控制不影响已开启功能的用户。控制台和管理凭据均不随源码或普通用户安装包分发。
+
+官方发行版的「为爱发电」实现和赞赏码由作者独立维护。源码版可独立构建并使用核心功能。为防止赞赏码被替换，官方收款入口由作者审核维护，不接受通过 PR 修改。
 
 作者：[kxdyh](https://github.com/kxdyh) · 官网：[disklens.site](https://disklens.site/)
 

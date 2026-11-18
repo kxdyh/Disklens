@@ -1,0 +1,364 @@
+<Window x:Class="DiskLens.App.SharedKnowledgeWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:loc="clr-namespace:DiskLens.App.Localization"
+        xmlns:local="clr-namespace:DiskLens.App"
+        xmlns:shared="clr-namespace:DiskLens.Core.SharedKnowledge;assembly=DiskLens.Core"
+        Title="{loc:Text s381}" Width="1080" Height="820" MinWidth="900" MinHeight="680"
+        WindowStartupLocation="CenterOwner" FontFamily="Microsoft YaHei UI, Segoe UI" FontSize="14"
+        Background="{DynamicResource MainSurfaceBrush}" Foreground="{DynamicResource PrimaryTextBrush}"
+        UseLayoutRounding="True" PreviewKeyDown="Window_OnPreviewKeyDown">
+    <Window.Resources>
+        <Style TargetType="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="TextWrapping" Value="Wrap"/><Setter Property="LineHeight" Value="24"/>
+        </Style>
+        <Style x:Key="Muted" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/>
+        </Style>
+        <Style x:Key="Caption" TargetType="TextBlock" BasedOn="{StaticResource Muted}">
+            <Setter Property="FontSize" Value="12"/><Setter Property="LineHeight" Value="20"/>
+        </Style>
+        <Style x:Key="Heading" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Setter Property="FontSize" Value="28"/><Setter Property="LineHeight" Value="40"/>
+            <Setter Property="FontWeight" Value="{DynamicResource DialogHeadingWeight}"/>
+        </Style>
+        <Style x:Key="SectionHeading" TargetType="TextBlock" BasedOn="{StaticResource {x:Type TextBlock}}">
+            <Setter Property="FontSize" Value="18"/><Setter Property="LineHeight" Value="28"/>
+            <Setter Property="FontWeight" Value="{DynamicResource DialogStrongWeight}"/>
+        </Style>
+        <Style x:Key="Warning" TargetType="TextBlock" BasedOn="{StaticResource SectionHeading}">
+            <Setter Property="Foreground" Value="{DynamicResource StatusDangerBrush}"/>
+            <Setter Property="FontWeight" Value="{DynamicResource DialogWarningWeight}"/>
+            <Setter Property="Margin" Value="0,22,0,22"/>
+        </Style>
+        <Style TargetType="Button">
+            <Setter Property="FontSize" Value="14"/><Setter Property="Padding" Value="18,11"/>
+            <Setter Property="Background" Value="{DynamicResource CardSubtleBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/><Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Cursor" Value="Hand"/><Setter Property="MinHeight" Value="42"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Button">
+                <Border x:Name="Surface" CornerRadius="8" Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" Padding="{TemplateBinding Padding}">
+                    <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" RecognizesAccessKey="True"/>
+                </Border>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="Surface" Property="Opacity" Value="0.8"/></Trigger>
+                    <Trigger Property="IsPressed" Value="True"><Setter TargetName="Surface" Property="Opacity" Value="0.65"/></Trigger>
+                    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="Surface" Property="BorderBrush" Value="{DynamicResource PrimaryTextBrush}"/><Setter TargetName="Surface" Property="BorderThickness" Value="0.5"/></Trigger>
+                    <Trigger Property="IsEnabled" Value="False"><Setter Property="Cursor" Value="Arrow"/></Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style x:Key="Primary" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="{DynamicResource PrimaryButtonBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryButtonTextBrush}"/>
+            <Setter Property="FontWeight" Value="{DynamicResource DialogStrongWeight}"/>
+        </Style>
+        <Style x:Key="Quiet" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style x:Key="EnableSharing" TargetType="Button" BasedOn="{StaticResource Primary}">
+            <Style.Triggers>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Background" Value="#20201E"/>
+                    <Setter Property="Foreground" Value="#BBC8BF"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style x:Key="SmallAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="FontSize" Value="12"/><Setter Property="Padding" Value="14,9"/>
+            <Setter Property="Margin" Value="0,8,8,0"/><Setter Property="MinHeight" Value="36"/>
+        </Style>
+        <Style x:Key="FeedbackAction" TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+            <Setter Property="FontSize" Value="13"/><Setter Property="Padding" Value="14,8"/>
+            <Setter Property="MinHeight" Value="36"/><Setter Property="Margin" Value="16,0,0,0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderThickness" Value="0.5"/>
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="Margin" Value="0,10,0,0"/><Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="CheckBox">
+                <DockPanel>
+                    <Border x:Name="CheckSurface" Width="18" Height="18" VerticalAlignment="Top" CornerRadius="4"
+                            Background="{DynamicResource CardBackgroundBrush}" BorderBrush="{DynamicResource SecondaryTextBrush}" BorderThickness="0.5" Margin="0,3,10,0">
+                        <Path x:Name="CheckMark" Data="M 3,8 L 7,12 L 14,4" Stroke="{DynamicResource PrimaryButtonTextBrush}" StrokeThickness="1.8" Visibility="Collapsed"/>
+                    </Border>
+                    <ContentPresenter RecognizesAccessKey="True"/>
+                </DockPanel>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsChecked" Value="True"><Setter TargetName="CheckSurface" Property="Background" Value="{DynamicResource PrimaryButtonBrush}"/><Setter TargetName="CheckMark" Property="Visibility" Value="Visible"/></Trigger>
+                    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="CheckSurface" Property="BorderBrush" Value="{DynamicResource PrimaryTextBrush}"/></Trigger>
+                    <Trigger Property="IsEnabled" Value="False"><Setter TargetName="CheckSurface" Property="Background" Value="{DynamicResource CardSubtleBackgroundBrush}"/><Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}"/><Setter Property="Cursor" Value="Arrow"/></Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style TargetType="ListBox">
+            <Setter Property="Background" Value="{DynamicResource CardBackgroundBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="BorderThickness" Value="0"/><Setter Property="Padding" Value="12"/>
+            <Setter Property="FontSize" Value="12"/>
+        </Style>
+        <Style TargetType="ListBoxItem">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="Padding" Value="8,7"/>
+            <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ListBoxItem">
+                <Border x:Name="ItemSurface" Background="Transparent" Padding="{TemplateBinding Padding}" BorderBrush="Transparent" BorderThickness="0.5"><ContentPresenter/></Border>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsSelected" Value="True"><Setter TargetName="ItemSurface" Property="Background" Value="{DynamicResource CardSubtleBackgroundBrush}"/></Trigger>
+                    <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="ItemSurface" Property="BorderBrush" Value="{DynamicResource SecondaryTextBrush}"/></Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style TargetType="ToolTip"><Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/><Setter Property="Background" Value="{DynamicResource CardSubtleBackgroundBrush}"/><Setter Property="BorderThickness" Value="0"/><Setter Property="FontSize" Value="12"/></Style>
+        <Style x:Key="DialogScrollPage" TargetType="RepeatButton">
+            <Setter Property="Focusable" Value="False"/><Setter Property="IsTabStop" Value="False"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="RepeatButton">
+                <Border Background="{TemplateBinding Background}"/>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style x:Key="DialogScrollThumb" TargetType="Thumb">
+            <Setter Property="Background" Value="{DynamicResource MutedTextBrush}"/>
+            <Setter Property="MinHeight" Value="28"/><Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Thumb">
+                <Border x:Name="ThumbSurface" Background="{TemplateBinding Background}" CornerRadius="4" Margin="3,2"/>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True"><Setter Property="Background" Value="{DynamicResource SecondaryTextBrush}"/></Trigger>
+                    <Trigger Property="IsDragging" Value="True"><Setter Property="Background" Value="{DynamicResource PrimaryTextBrush}"/></Trigger>
+                    <Trigger Property="IsEnabled" Value="False"><Setter Property="Background" Value="{DynamicResource BorderBrush}"/></Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+        <Style TargetType="ScrollBar">
+            <Setter Property="Width" Value="14"/><Setter Property="Background" Value="{DynamicResource CardSubtleBackgroundBrush}"/>
+            <Setter Property="Margin" Value="2,0,0,0"/><Setter Property="SnapsToDevicePixels" Value="True"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="ScrollBar">
+                <Border Background="{TemplateBinding Background}" CornerRadius="7">
+                    <Track x:Name="PART_Track" Orientation="{TemplateBinding Orientation}" IsDirectionReversed="True"
+                           Minimum="{TemplateBinding Minimum}" Maximum="{TemplateBinding Maximum}"
+                           Value="{Binding Value, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}"
+                           ViewportSize="{TemplateBinding ViewportSize}">
+                        <Track.DecreaseRepeatButton><RepeatButton x:Name="PageBefore" Command="{x:Static ScrollBar.PageUpCommand}" Style="{StaticResource DialogScrollPage}"/></Track.DecreaseRepeatButton>
+                        <Track.Thumb><Thumb x:Name="DragThumb" Style="{StaticResource DialogScrollThumb}"/></Track.Thumb>
+                        <Track.IncreaseRepeatButton><RepeatButton x:Name="PageAfter" Command="{x:Static ScrollBar.PageDownCommand}" Style="{StaticResource DialogScrollPage}"/></Track.IncreaseRepeatButton>
+                    </Track>
+                </Border>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="Orientation" Value="Horizontal">
+                        <Setter TargetName="PART_Track" Property="IsDirectionReversed" Value="False"/>
+                        <Setter TargetName="PageBefore" Property="Command" Value="{x:Static ScrollBar.PageLeftCommand}"/>
+                        <Setter TargetName="PageAfter" Property="Command" Value="{x:Static ScrollBar.PageRightCommand}"/>
+                        <Setter TargetName="DragThumb" Property="MinHeight" Value="0"/>
+                        <Setter TargetName="DragThumb" Property="MinWidth" Value="28"/>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+            <Style.Triggers>
+                <Trigger Property="Orientation" Value="Horizontal"><Setter Property="Width" Value="Auto"/><Setter Property="Height" Value="14"/><Setter Property="Margin" Value="0,2,0,0"/></Trigger>
+            </Style.Triggers>
+        </Style>
+        <Style TargetType="Expander">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}"/>
+            <Setter Property="Template"><Setter.Value><ControlTemplate TargetType="Expander">
+                <StackPanel>
+                    <ToggleButton IsChecked="{Binding IsExpanded, RelativeSource={RelativeSource TemplatedParent}, Mode=TwoWay}" Content="{TemplateBinding Header}" Foreground="{TemplateBinding Foreground}" Cursor="Hand" HorizontalContentAlignment="Left">
+                        <ToggleButton.Template><ControlTemplate TargetType="ToggleButton">
+                            <Border x:Name="ExpanderSurface" Background="Transparent" Padding="0,12" BorderBrush="Transparent" BorderThickness="0.5">
+                                <DockPanel><Path x:Name="Arrow" Data="M 0,0 L 5,5 L 0,10" Stroke="{DynamicResource SecondaryTextBrush}" StrokeThickness="1.5" Margin="2,0,12,0" VerticalAlignment="Center" RenderTransformOrigin="0.5,0.5"/><ContentPresenter RecognizesAccessKey="True" TextElement.Foreground="{TemplateBinding Foreground}"/></DockPanel>
+                            </Border>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsChecked" Value="True"><Setter TargetName="Arrow" Property="RenderTransform"><Setter.Value><RotateTransform Angle="90"/></Setter.Value></Setter></Trigger>
+                                <Trigger Property="IsKeyboardFocused" Value="True"><Setter TargetName="ExpanderSurface" Property="BorderBrush" Value="{DynamicResource SecondaryTextBrush}"/></Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate></ToggleButton.Template>
+                    </ToggleButton>
+                    <ContentPresenter x:Name="ExpandedContent" Visibility="Collapsed" Opacity="0" IsHitTestVisible="False">
+                        <ContentPresenter.LayoutTransform><ScaleTransform ScaleY="0"/></ContentPresenter.LayoutTransform>
+                    </ContentPresenter>
+                </StackPanel>
+                <ControlTemplate.Triggers>
+                    <Trigger Property="IsExpanded" Value="True">
+                        <Setter TargetName="ExpandedContent" Property="IsHitTestVisible" Value="True"/>
+                        <Trigger.EnterActions><BeginStoryboard><Storyboard>
+                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ExpandedContent" Storyboard.TargetProperty="Visibility"><DiscreteObjectKeyFrame KeyTime="0" Value="{x:Static Visibility.Visible}"/></ObjectAnimationUsingKeyFrames>
+                            <DoubleAnimation Storyboard.TargetName="ExpandedContent" Storyboard.TargetProperty="(FrameworkElement.LayoutTransform).(ScaleTransform.ScaleY)" To="1" Duration="{StaticResource DisclosureDuration}"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetName="ExpandedContent" Storyboard.TargetProperty="Opacity" To="1" Duration="{StaticResource DisclosureDuration}"/>
+                        </Storyboard></BeginStoryboard></Trigger.EnterActions>
+                        <Trigger.ExitActions><BeginStoryboard><Storyboard>
+                            <DoubleAnimation Storyboard.TargetName="ExpandedContent" Storyboard.TargetProperty="(FrameworkElement.LayoutTransform).(ScaleTransform.ScaleY)" To="0" Duration="{StaticResource DisclosureDuration}"><DoubleAnimation.EasingFunction><CubicEase EasingMode="EaseInOut"/></DoubleAnimation.EasingFunction></DoubleAnimation>
+                            <DoubleAnimation Storyboard.TargetName="ExpandedContent" Storyboard.TargetProperty="Opacity" To="0" Duration="{StaticResource DisclosureDuration}"/>
+                            <ObjectAnimationUsingKeyFrames Storyboard.TargetName="ExpandedContent" Storyboard.TargetProperty="Visibility"><DiscreteObjectKeyFrame KeyTime="{StaticResource DisclosureEndTime}" Value="{x:Static Visibility.Collapsed}"/></ObjectAnimationUsingKeyFrames>
+                        </Storyboard></BeginStoryboard></Trigger.ExitActions>
+                    </Trigger>
+                </ControlTemplate.Triggers>
+            </ControlTemplate></Setter.Value></Setter>
+        </Style>
+    </Window.Resources>
+    <Grid Margin="38,24,38,22">
+        <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+        <Grid Margin="0,0,0,22">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel>
+                <StackPanel Orientation="Horizontal"><TextBlock x:Name="DialogHeadingText" Text="{loc:Text s381}" Style="{StaticResource SectionHeading}"/><Border Background="{DynamicResource CardSubtleBackgroundBrush}" CornerRadius="5" Padding="8,1" Margin="12,0,0,0" VerticalAlignment="Center"><TextBlock Text="Beta" Style="{StaticResource Caption}"/></Border></StackPanel>
+            </StackPanel>
+            <StackPanel x:Name="StepProgress" Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock x:Name="StepOne" Text="{loc:Text s10}" Style="{StaticResource Caption}"/>
+                <TextBlock Text="/" Style="{StaticResource Caption}" Margin="14,0"/>
+                <TextBlock x:Name="StepTwo" Text="{loc:Text s12}" Style="{StaticResource Caption}"/>
+                <TextBlock Text="/" Style="{StaticResource Caption}" Margin="14,0"/>
+                <TextBlock x:Name="StepThree" Text="{loc:Text s14}" Style="{StaticResource Caption}"/>
+            </StackPanel>
+        </Grid>
+        <Grid Grid.Row="1">
+            <ScrollViewer x:Name="PageScroll" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Padding="0,0,12,0">
+                <Grid>
+                    <StackPanel x:Name="IntroPage">
+                        <TextBlock Text="{loc:Text s590}" Style="{StaticResource Heading}"/>
+                        <TextBlock Text="{loc:Text s168}" Style="{StaticResource Muted}" Margin="0,8,0,0"/>
+                        <Border Background="{DynamicResource CardBackgroundBrush}" CornerRadius="16" Margin="0,24,0,22" Padding="12,4">
+                            <local:SharedKnowledgeFlowIllustration Height="330" AutomationProperties.Name="{loc:Text s383}"/>
+                        </Border>
+                        <Grid Margin="4,0,4,8">
+                            <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="40"/><ColumnDefinition/></Grid.ColumnDefinitions>
+                            <StackPanel><TextBlock Text="{loc:Text s126}" Style="{StaticResource SectionHeading}"/><TextBlock Text="{loc:Text s183}" Style="{StaticResource Muted}" Margin="0,7,0,0"/></StackPanel>
+                            <StackPanel Grid.Column="2"><TextBlock Text="{loc:Text s166}" Style="{StaticResource SectionHeading}"/><TextBlock Text="{loc:Text s382}" Style="{StaticResource Muted}" Margin="0,7,0,0"/></StackPanel>
+                        </Grid>
+                    </StackPanel>
+                    <StackPanel x:Name="ScopePage" Visibility="Collapsed">
+                        <TextBlock x:Name="BenefitsHeading" Text="{loc:Text s403}" Style="{StaticResource Heading}"/>
+                        <TextBlock Text="{loc:Text s97}" Style="{StaticResource Muted}" Margin="0,8,0,0"/>
+                        <local:SharedKnowledgeBenefitsIllustration x:Name="BenefitsIllustration" Height="380" Margin="0,18,0,8"
+                            AutomationProperties.Name="{loc:Text s85}"/>
+                    </StackPanel>
+                    <StackPanel x:Name="ManagementPage" Visibility="Collapsed">
+                        <TextBlock Text="{loc:Text s547}" Style="{StaticResource Heading}" Margin="0,0,0,18"/>
+                        <Border x:Name="EnabledNotice" Background="{DynamicResource CardSubtleBackgroundBrush}" Padding="18,12" CornerRadius="8" Margin="0,0,0,18" Visibility="Collapsed"><TextBlock Text="{loc:Text s125}"/></Border>
+                            <StackPanel x:Name="ManagePage" Margin="0,6,0,12">
+                                <TextBlock Text="{loc:Text s657}" Style="{StaticResource SectionHeading}"/>
+                                <TextBlock Text="{loc:Text s177}" Style="{StaticResource Caption}" Margin="0,8,0,0"/>
+                                <ListBox x:Name="ExclusionList" MinHeight="84" MaxHeight="150" Margin="0,12,0,0" ScrollViewer.HorizontalScrollBarVisibility="Auto" AutomationProperties.Name="{loc:Text s658}"/>
+                                <WrapPanel><Button Content="{loc:Text s534}" Click="AddExclusion_OnClick" Style="{StaticResource SmallAction}"/><Button Content="{loc:Text s563}" Click="RemoveExclusion_OnClick" Style="{StaticResource SmallAction}"/></WrapPanel>
+                                <TextBlock Text="{loc:Text s535}" Style="{StaticResource Caption}" Margin="0,8,0,20"/>
+                                <TextBlock Text="{loc:Text s404}" Style="{StaticResource Caption}"/>
+                                <WrapPanel><Button Content="{loc:Text s484}" Click="ListContributions_OnClick" Style="{StaticResource SmallAction}"/><Button Content="{loc:Text s373}" Click="WithdrawOne_OnClick" Style="{StaticResource SmallAction}"/><Button Content="{loc:Text s370}" Click="WithdrawAll_OnClick" Style="{StaticResource SmallAction}"/></WrapPanel>
+                                <ListBox x:Name="ContributionList" MinHeight="100" MaxHeight="180" Margin="0,12,0,0" DisplayMemberPath="DisplayText" AutomationProperties.Name="{loc:Text s463}" ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                                <Button x:Name="ImportHistoryButton" Content="{loc:Text s488}" Click="ImportHistory_OnClick" Style="{StaticResource SmallAction}" HorizontalAlignment="Left"/>
+                                <TextBlock Text="{loc:Text s313}" Style="{StaticResource Caption}" Margin="0,20,0,0"/>
+                                <WrapPanel><Button Content="{loc:Text s232}" Click="Export_OnClick" Style="{StaticResource SmallAction}"/><Button Content="{loc:Text s231}" Click="Import_OnClick" Style="{StaticResource SmallAction}"/></WrapPanel>
+                                <TextBlock Text="{loc:Text s295}" Style="{StaticResource Caption}" Margin="0,22,0,4"/>
+                                <TextBlock x:Name="ServiceEndpointText" Style="{StaticResource Caption}" Margin="0,0,0,8"/>
+                            </StackPanel>
+                        <Border Background="{DynamicResource CardSubtleBackgroundBrush}" CornerRadius="10" Padding="20,16" Margin="0,14,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                                <TextBlock Text="{loc:Text s281}" FontWeight="{DynamicResource DialogStrongWeight}" VerticalAlignment="Center"/>
+                                <Button x:Name="PreviewButton" Grid.Column="1" Content="{loc:Text s662}" Click="Preview_OnClick" Style="{StaticResource Primary}" Margin="16,0,0,0"/>
+                                <TextBlock x:Name="PreviewText" Grid.Row="1" Grid.ColumnSpan="2" Text="{loc:Text s663}" Style="{StaticResource Caption}" Margin="0,8,0,0"/>
+                            </Grid>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+            </ScrollViewer>
+            <Grid x:Name="AgreementPage" Visibility="Collapsed">
+                <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+                <StackPanel Margin="0,0,0,16">
+                    <TextBlock x:Name="AgreementHeading" Text="{loc:Text s607}" Style="{StaticResource Heading}"/>
+                    <Expander Header="{loc:Text s483}" Margin="0,4,0,0">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Bind Text, ElementName=PreviewText}" Style="{StaticResource Caption}"/>
+                            <Button Content="{loc:Text s593}" Click="ManageScope_OnClick" Style="{StaticResource SmallAction}" HorizontalAlignment="Left"/>
+                        </StackPanel>
+                    </Expander>
+                </StackPanel>
+                <Border Grid.Row="1" Background="{DynamicResource CardBackgroundBrush}" CornerRadius="12" Padding="24,8,12,8">
+                    <ScrollViewer x:Name="AgreementScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,12,12,12"
+                                  ScrollChanged="Agreement_OnScrollChanged" AutomationProperties.Name="{loc:Text s387}">
+                        <StackPanel>
+                            <TextBlock Text="{loc:Text s386}" Style="{StaticResource SectionHeading}"/>
+                            <TextBlock Text="{loc:Bind Source={x:Static shared:SharedConsentSnapshot.CurrentAgreementVersion}, Format=s674}" Style="{StaticResource Caption}" Margin="0,5,0,0"/>
+                            <TextBlock Text="{loc:Text s167}" Style="{StaticResource Warning}"/>
+                            <TextBlock Text="{loc:Text s11}" FontWeight="{DynamicResource DialogStrongWeight}"/>
+                            <TextBlock Text="{loc:Text s283}" Style="{StaticResource Muted}" Margin="0,8,0,20"/>
+                            <TextBlock Text="{loc:Text s13}" FontWeight="{DynamicResource DialogStrongWeight}"/>
+                            <TextBlock Text="{loc:Text s123}" Style="{StaticResource Muted}" Margin="0,8,0,12"/>
+                            <TextBlock Text="{loc:Text s73}" Style="{StaticResource Muted}" Margin="0,0,0,20"/>
+                            <TextBlock Text="{loc:Text s15}" FontWeight="{DynamicResource DialogStrongWeight}"/>
+                            <TextBlock Text="{loc:Text s39}" Style="{StaticResource Muted}" Margin="0,8,0,0"/>
+                            <TextBlock Text="{loc:Text s167}" Style="{StaticResource Warning}"/>
+                            <TextBlock Text="{loc:Text s16}" FontWeight="{DynamicResource DialogStrongWeight}"/>
+                            <TextBlock Text="{loc:Text s319}" Style="{StaticResource Muted}" Margin="0,8,0,20"/>
+                            <TextBlock Text="{loc:Text s17}" FontWeight="{DynamicResource DialogStrongWeight}"/>
+                            <TextBlock Text="{loc:Text s656}" Style="{StaticResource Muted}" Margin="0,8,0,20"/>
+                            <TextBlock Text="{loc:Text s18}" FontWeight="{DynamicResource DialogStrongWeight}"/>
+                            <TextBlock Text="{loc:Text s282}" Style="{StaticResource Muted}" Margin="0,8,0,20"/>
+                            <TextBlock Text="{loc:Text s19}" FontWeight="{DynamicResource DialogStrongWeight}"/>
+                            <TextBlock Text="{loc:Text s570}" Style="{StaticResource Muted}" Margin="0,8,0,0"/>
+                            <TextBlock Text="{loc:Text s167}" Style="{StaticResource Warning}"/>
+                            <TextBlock Text="{loc:Text s20}" FontWeight="{DynamicResource DialogStrongWeight}"/>
+                            <TextBlock Text="{loc:Text s448}" Style="{StaticResource Muted}" Margin="0,8,0,10"/>
+                            <TextBlock Margin="0,0,0,20"><Hyperlink NavigateUri="https://github.com/kxdyh/Disklens" RequestNavigate="Repository_OnRequestNavigate" Foreground="{DynamicResource LinkBrush}" AutomationProperties.Name="{loc:Text s325}">github.com/kxdyh/Disklens ↗</Hyperlink></TextBlock>
+                            <TextBlock Text="{loc:Text s186}" FontWeight="{DynamicResource DialogStrongWeight}" Margin="0,0,0,10"/>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Border>
+                <StackPanel Grid.Row="2" Margin="2,10,2,0">
+                    <CheckBox x:Name="AcceptAgreement" IsEnabled="False" Checked="Consent_OnChanged" Unchecked="Consent_OnChanged"><TextBlock TextWrapping="Wrap" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type CheckBox}}}"><Run Text="{loc:Text s317}"/><Run Text="{loc:Text s670}" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"/></TextBlock></CheckBox>
+                    <CheckBox x:Name="AcceptFuture" Checked="Consent_OnChanged" Unchecked="Consent_OnChanged"><TextBlock Text="{loc:Text s316}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type CheckBox}}}"/></CheckBox>
+                    <CheckBox x:Name="IncludeHistory" Checked="Consent_OnChanged" Unchecked="Consent_OnChanged"><TextBlock Text="{loc:Text s208}" Style="{StaticResource Caption}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type CheckBox}}}"/></CheckBox>
+                </StackPanel>
+            </Grid>
+        </Grid>
+        <StackPanel Grid.Row="2" Margin="0,20,0,0">
+            <Border x:Name="FeedbackPanel" Visibility="Collapsed" CornerRadius="10" Padding="14,12" Margin="0,0,0,12"
+                    BorderThickness="1" AutomationProperties.LiveSetting="Assertive">
+                <Grid>
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="34"/><ColumnDefinition/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                    <TextBlock x:Name="FeedbackIcon" Grid.Column="0" FontSize="24" FontWeight="Bold" VerticalAlignment="Top" HorizontalAlignment="Center"/>
+                    <StackPanel Grid.Column="1">
+                        <TextBlock x:Name="FeedbackTitle" FontSize="16" FontWeight="Bold" LineHeight="24"/>
+                        <TextBlock x:Name="FeedbackText" FontSize="14" LineHeight="22" TextWrapping="Wrap" MaxWidth="720" AutomationProperties.LiveSetting="Assertive"/>
+                    </StackPanel>
+                    <Button x:Name="FeedbackActionButton" Grid.Column="2" Click="FeedbackAction_OnClick" Style="{StaticResource FeedbackAction}"/>
+                </Grid>
+            </Border>
+            <Button x:Name="ScopeCloudConnectionHelp" Content="?" Width="28" Height="28" Padding="0"
+                    HorizontalAlignment="Right" Margin="0,0,0,10" Visibility="Collapsed"
+                    FontWeight="Bold" FontSize="15" Style="{StaticResource Quiet}"
+                    ToolTipService.InitialShowDelay="150" ToolTipService.ShowDuration="120000"
+                    AutomationProperties.Name="{loc:Text s682}">
+                <Button.ToolTip><ToolTip MaxWidth="480" Padding="14" Background="{DynamicResource CardBackgroundBrush}"
+                    Foreground="{DynamicResource PrimaryTextBrush}"><TextBlock Text="{loc:Text s683}" TextWrapping="Wrap" FontSize="13" LineHeight="21" /></ToolTip></Button.ToolTip>
+            </Button>
+            <Border x:Name="AgreementCloudConnectionHint" Visibility="Collapsed" Margin="0,0,0,10" Padding="12,8"
+                    Background="{DynamicResource CardSubtleBackgroundBrush}" CornerRadius="6">
+                <StackPanel>
+                    <TextBlock Text="{loc:Text s683}" TextWrapping="Wrap" FontSize="12" LineHeight="19"
+                               Foreground="{DynamicResource SecondaryTextBrush}" />
+                    <TextBlock FontSize="12" Margin="0,4,0,0"><Hyperlink NavigateUri="https://github.com/kxdyh/Disklens/issues"
+                        RequestNavigate="CloudIssue_OnRequestNavigate" Foreground="{DynamicResource LinkBrush}"><Run Text="{loc:Text s684}" /></Hyperlink></TextBlock>
+                </StackPanel>
+            </Border>
+            <ProgressBar x:Name="ActivityBar" Height="3" Margin="0,0,0,10" IsIndeterminate="True" Visibility="Collapsed" Foreground="{DynamicResource AccentBrush}"/>
+            <Grid>
+                <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <StackPanel Orientation="Horizontal">
+                    <Button x:Name="CloseButton" Content="{loc:Text s82}" Click="Close_OnClick" Style="{StaticResource Quiet}" Foreground="{DynamicResource StatusDangerBrush}" Padding="4,11,16,11"/>
+                    <Button x:Name="DisableButton" Content="{loc:Text s132}" Click="Disable_OnClick" Style="{StaticResource Quiet}" Foreground="{DynamicResource StatusDangerBrush}" Visibility="Collapsed"/>
+                </StackPanel>
+                <TextBlock x:Name="PageNumberText" Grid.Column="1" Style="{StaticResource Caption}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal">
+                    <Button x:Name="PreviousButton" Content="{loc:Text s72}" Click="Previous_OnClick" Style="{StaticResource Quiet}" Margin="0,0,10,0" Visibility="Collapsed"/>
+                    <Button x:Name="NextButton" Content="{loc:Text s79}" Click="Next_OnClick" Style="{StaticResource Primary}"/>
+                    <Button x:Name="SaveButton" Content="{loc:Text s212}" Click="Save_OnClick" Style="{StaticResource EnableSharing}" Visibility="Collapsed" IsEnabled="False"/>
+                    <Button x:Name="ManagementContinueButton" Content="{loc:Text s89}" Click="ManagementContinue_OnClick" Style="{StaticResource Primary}" Visibility="Collapsed"/>
+                </StackPanel>
+            </Grid>
+        </StackPanel>
+    </Grid>
+</Window>
