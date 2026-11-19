@@ -14,7 +14,9 @@ Windows 10 / 11 · x64 · Free for noncommercial use
 
 > **Current version: 1.1.2.** [Download from the official website](https://disklens.site/) · [Changelog](CHANGELOG.en.md). The [1.0.0 preview](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) remains available in release history.
 
-![DiskLens scanning in light and dark themes](assets/demos/scan-day-night.gif)
+![DiskLens cloud experience labels, folder navigation, hover summaries and detailed analysis](assets/demos/cloud-experience-labels.gif)
+
+Cloud experience adds purpose labels to matching blocks. Double-click to browse a folder, hover for a summary, or click for detailed analysis. This animation is an excerpt from the product film. Cloud experience is opt-in, and results appear only for successfully matched items.
 
 ## Find a starting point for organizing your disk
 
@@ -35,6 +37,10 @@ Progress is calculated as deduplicated scanned disk usage divided by the drive's
 ## See it in action
 
 These landscape recordings show the app in light and dark themes. They have been edited, sped up, and masked to hide local workspace paths. Scan times shown here are demonstrations, not benchmarks; interface details may differ from the current release.
+
+**Scanning & themes: scan disk usage and switch between light and dark appearances.**
+
+![DiskLens scanning in light and dark themes](assets/demos/scan-day-night.gif)
 
 **Focus view: navigate from a large folder into its contents.**
 

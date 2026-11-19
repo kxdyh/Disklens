@@ -14,7 +14,9 @@ Windows 10 / 11 · x64 · 免费使用
 
 > **当前版本：1.1.2。** [官网下载安装包](https://disklens.site/) · [更新日志](CHANGELOG.md)。[1.0.0 预览版](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) 仍可从历史发行下载。
 
-![DiskLens 扫描与日夜主题演示](assets/demos/scan-day-night.gif)
+![DiskLens 云端经验用途标签、逐层浏览与悬浮详情演示](assets/demos/cloud-experience-labels.gif)
+
+云端经验让文件块显示用途标签；双击进入下一层，悬浮看短用途，单击看详细分析。动图节选自宣传片，云端经验需主动启用，匹配成功的项目才会显示对应结论。
 
 ## 从空间占用，找到整理的起点
 
@@ -35,6 +37,10 @@ DiskLens 将文件与文件夹的磁盘占用绘制为矩形方块。先找到�
 ## 实机演示
 
 以下为横屏录制的应用演示，每张动图依次展示浅色与深色界面。为便于阅读，录屏经过剪辑、变速和本机工作区路径遮盖；其中的扫描时长不代表性能基准，界面细节以当前发布版本为准。
+
+**扫描与主题：扫描磁盘占用，切换浅色与深色界面。**
+
+![DiskLens 扫描与日夜主题演示](assets/demos/scan-day-night.gif)
 
 **专注浏览：从大目录进入下一层。**
 
