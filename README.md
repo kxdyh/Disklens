@@ -80,6 +80,7 @@ DiskLens **可免费用于非商业用途**。本仓库的 DiskLens 源码按 [P
 
 - [Windows 客户端](src/DiskLens.App)、[扫描与分析核心](src/DiskLens.Core)
 - [云端经验公开服务](services/shared-knowledge)
+- [官网贡献统计](services/site-stats)：每天两次生成匿名汇总快照。
 - [中文使用指南](docs/releases/1.1-使用说明.md) · [English user guide](docs/releases/1.1-UserGuide.en.md)
 
 ### 构建 Windows 客户端

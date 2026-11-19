@@ -80,6 +80,7 @@ DiskLens is **free for noncommercial use**. The DiskLens source in this reposito
 
 - [Windows client](src/DiskLens.App) and [scanning and analysis core](src/DiskLens.Core)
 - [Public cloud experience service](services/shared-knowledge)
+- [Website contribution statistics](services/site-stats): anonymous aggregate snapshots refreshed twice daily.
 - [English user guide](docs/releases/1.1-UserGuide.en.md) · [中文使用指南](docs/releases/1.1-使用说明.md)
 
 ### Build the Windows client

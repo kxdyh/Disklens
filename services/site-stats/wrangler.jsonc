@@ -1,0 +1,15 @@
+{
+  "name": "disklens-site-stats",
+  "main": "src/worker.ts",
+  "compatibility_date": "2026-11-07",
+  "workers_dev": false,
+  "preview_urls": false,
+  // Beijing 00:00 and 12:00. No route changes to the application API.
+  "triggers": { "crons": ["0 4,16 * * *"] },
+  "d1_databases": [{
+    "binding": "DB", "database_name": "shared-knowledge-local",
+    "database_id": "00000000-0000-0000-0000-000000000000"
+  }],
+  "r2_buckets": [{ "binding": "ASSETS", "bucket_name": "replace-with-public-assets-bucket" }],
+  "observability": { "enabled": false }
+}
