@@ -1,13 +1,19 @@
 namespace DiskLens.Core.SharedKnowledge;
 
-/// <summary>Closed, content-free request diagnostics. No addresses, identities or request contents.</summary>
+/// <summary>Content-free request diagnostics. Route details contain only public edge IPs and DNS sources;
+/// no user paths, credentials, installation identities or request contents.</summary>
 public sealed record SharedRequestDiagnostic(
     string Operation,
     string Phase,
     string Outcome,
     int? HttpStatus,
     TimeSpan Elapsed,
-    TimeSpan Timeout);
+    TimeSpan Timeout)
+{
+    public string? RouteSource { get; init; }
+    public string? RouteAddress { get; init; }
+    public string? RouteDnsHost { get; init; }
+}
 
 /// <summary>Identifies a request's own deadline separately from caller or transport cancellation.</summary>
 public sealed class SharedRequestTimeoutException : OperationCanceledException

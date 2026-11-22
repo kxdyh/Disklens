@@ -12,7 +12,7 @@ Windows 10 / 11 · x64 · Free for noncommercial use
 
 </div>
 
-> **Current version: 1.1.2.** [Download from the official website](https://disklens.site/) · [Changelog](CHANGELOG.en.md). The [1.0.0 preview](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) remains available in release history.
+> **Current version: 1.1.3 (2026-11-22).** [Download the Windows x64 installer](https://github.com/kxdyh/Disklens/releases/download/v1.1.3/DiskLens-Setup-1.1.3-x64.exe) · [Website](https://disklens.site/) · [Changelog](CHANGELOG.en.md). The [1.0.0 preview](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) remains available in release history.
 
 ![DiskLens cloud experience labels, folder navigation, hover summaries and detailed analysis](assets/demos/cloud-experience-labels.gif)
 
@@ -52,7 +52,7 @@ These landscape recordings show the app in light and dark themes. They have been
 
 ## Download & get started
 
-1. Download the current Windows x64 installer from the [website](https://disklens.site/).
+1. Download the [DiskLens 1.1.3 Windows x64 installer](https://github.com/kxdyh/Disklens/releases/download/v1.1.3/DiskLens-Setup-1.1.3-x64.exe), or visit the [website](https://disklens.site/) for release information.
 2. Close any running DiskLens instance and run the installer. For an older ZIP release, extract it fully before running `DiskLens.App.exe`.
 3. Choose a drive or folder to scan, then browse its space usage when the scan finishes.
 4. To use AI assistance, configure your own service endpoint, model, and API key in Settings, then explicitly request an analysis.
@@ -65,6 +65,7 @@ The package includes its runtime and supports Windows 10 / 11 x64. Shared experi
 - **AI is optional.** The configured service is called only when you explicitly request analysis. Relevant analysis information is sent to that service; review its data policy before use.
 - **Bring your own API key.** Never post keys, complete personal paths, or sensitive file information in an issue.
 - **DiskLens does not automatically delete files.** AI output is advisory. Verify a file's purpose and back up important data before organizing it.
+- **Manual recycling requires your confirmation.** Block context menus, file details, and analysis lists use the same rules. DiskLens no longer blocks manual recycling throughout `ProgramData`, `Program Files`, or `Windows` solely because of the location; this does not mean their contents are safe to delete. Drive and network-share roots, aggregate display blocks, and operations during scanning, AI analysis, or refresh remain disabled. Confirmation is still required, and Windows permissions and files in use determine whether the operation can complete.
 
 ## Report a problem or suggest a feature
 

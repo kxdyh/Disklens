@@ -38,6 +38,7 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
     public event Action<SharedRequestDiagnostic>? RequestCompleted;
     private static readonly JsonSerializerOptions Json = new(JsonSerializerDefaults.Web);
     private readonly HttpClient _http;
+    private readonly TimeSpan _requestTimeout;
     private readonly SharedInitialConnectionRoute? _initialConnectionRoute;
     private readonly SemaphoreSlim _pathIndexGate = new(1, 1);
     private SharedPathIndex? _pathIndex;
@@ -45,9 +46,12 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
     // Keep transport bounded without truncating a valid full bilingual page.
     private const int MaximumResponseBytes = 1024 * 1024;
     public SharedExperienceClient(Uri endpoint) : this(endpoint, CreateDefaultHandler(endpoint)) { }
-    public SharedExperienceClient(Uri endpoint, HttpMessageHandler handler)
+    public SharedExperienceClient(Uri endpoint, HttpMessageHandler handler) : this(endpoint, handler, DefaultRequestTimeout) { }
+    internal SharedExperienceClient(Uri endpoint, HttpMessageHandler handler, TimeSpan requestTimeout)
     {
         ValidateEndpoint(endpoint);
+        if (requestTimeout <= TimeSpan.Zero) throw new ArgumentOutOfRangeException(nameof(requestTimeout));
+        _requestTimeout = requestTimeout;
         _initialConnectionRoute = handler as SharedInitialConnectionRoute;
         _http = new HttpClient(handler) { BaseAddress = new Uri(endpoint.AbsoluteUri.TrimEnd('/') + "/"), Timeout = System.Threading.Timeout.InfiniteTimeSpan };
         _http.DefaultRequestHeaders.UserAgent.Add(new ProductInfoHeaderValue("DiskLens", "1.1.0"));
@@ -276,12 +280,11 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
             try
             {
                 return await SendAsync<T>(method, path, body, installation, cancellationToken,
-                    DefaultRequestTimeout).ConfigureAwait(false);
+                    _requestTimeout).ConfigureAwait(false);
             }
             catch (Exception ex) when (attempt == 0 && !cancellationToken.IsCancellationRequested
                 && IsTransientReadFailure(ex))
             {
-                _initialConnectionRoute?.RefreshAfterReadFailure(ex);
                 if (!retryTransientFailure) throw;
                 await Task.Delay(250, cancellationToken).ConfigureAwait(false);
             }
@@ -305,8 +308,9 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
         var phase = "Routing";
         var outcome = "Failure";
         int? status = null;
-        var timeout = requestTimeout ?? DefaultRequestTimeout;
+        var timeout = requestTimeout ?? _requestTimeout;
         CancellationTokenSource? deadline = null;
+        HttpRequestMessage? sentRequest = null;
         try
         {
             // The five-second probe chooses a route using a read-only request.
@@ -319,6 +323,7 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
             deadlineToken.ThrowIfCancellationRequested();
             phase = "Sending";
             using var request = new HttpRequestMessage(method, path);
+            sentRequest = request;
             if (installation is not null)
             {
                 request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", installation.ManagementToken);
@@ -370,9 +375,14 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
             else if (deadline?.IsCancellationRequested == true)
             {
                 outcome = "DeadlineExceeded";
+                _initialConnectionRoute?.NotifyResponseFailure(sentRequest, ex);
                 throw new SharedRequestTimeoutException(operation, phase, timeout, watch.Elapsed, ex, deadline.Token);
             }
-            else outcome = "TransportCanceled";
+            else
+            {
+                outcome = "TransportCanceled";
+                _initialConnectionRoute?.NotifyResponseFailure(sentRequest, ex);
+            }
             throw;
         }
         catch (SharedNewContributorsPausedException)
@@ -384,22 +394,31 @@ public sealed class SharedExperienceClient : ISharedExperienceClient, IDisposabl
         {
             status ??= (int?)ex.StatusCode;
             outcome = status.HasValue ? "HttpFailure" : "TransportFailure";
+            if (!cancellationToken.IsCancellationRequested
+                && (ex.StatusCode is null || (int)ex.StatusCode.Value is >= 300 and <= 399
+                    || (int)ex.StatusCode.Value == 408 || (int)ex.StatusCode.Value >= 500))
+                _initialConnectionRoute?.NotifyResponseFailure(sentRequest, ex);
             throw;
         }
         catch (Exception ex) when (ex is InvalidDataException or JsonException)
         {
             outcome = "InvalidResponse";
+            if (!cancellationToken.IsCancellationRequested) _initialConnectionRoute?.NotifyResponseFailure(sentRequest, ex);
             throw;
         }
-        catch (IOException)
+        catch (IOException ex)
         {
             outcome = "TransportFailure";
+            if (!cancellationToken.IsCancellationRequested) _initialConnectionRoute?.NotifyResponseFailure(sentRequest, ex);
             throw;
         }
         finally
         {
             deadline?.Dispose();
-            ReportRequestCompleted(new(operation, phase, outcome, status, watch.Elapsed, timeout));
+            SharedRouteRequestSnapshot? route = null;
+            sentRequest?.Options.TryGetValue(SharedInitialConnectionRoute.DiagnosticKey, out route);
+            ReportRequestCompleted(new(operation, phase, outcome, status, watch.Elapsed, timeout)
+            { RouteSource = route?.Source, RouteAddress = route?.Address, RouteDnsHost = route?.DnsHost });
         }
     }
     private static async Task<bool> IsNewContributorsPausedAsync(HttpContent content, CancellationToken cancellationToken)

@@ -2,11 +2,11 @@ namespace DiskLens.Core.Policies;
 
 public sealed class DeletionPolicyService
 {
-    private readonly ILocationPolicy _locationPolicy;
-
     public DeletionPolicyService(ILocationPolicy locationPolicy)
     {
-        _locationPolicy = locationPolicy;
+        // Location risk still informs scanning and AI advice. It must not veto
+        // an explicitly confirmed, manual move to the Windows Recycle Bin.
+        ArgumentNullException.ThrowIfNull(locationPolicy);
     }
 
     public DeletionDecision Evaluate(string path, bool isDirectory)
@@ -17,15 +17,6 @@ public sealed class DeletionPolicyService
                 CanOpenLocation: false,
                 CanRecycle: false,
                 Reason: "路径为空，无法执行操作。");
-        }
-
-        var assessment = _locationPolicy.AssessPath(path, isDirectory, FileAttributes.Normal);
-        if (assessment.IsProtectedLocation)
-        {
-            return new DeletionDecision(
-                CanOpenLocation: true,
-                CanRecycle: false,
-                Reason: "该路径位于受保护系统区域，首版默认禁止在应用内回收。");
         }
 
         if (IsFileSystemRoot(path))

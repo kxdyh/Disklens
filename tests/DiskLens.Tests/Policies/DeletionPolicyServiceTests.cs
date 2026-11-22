@@ -48,14 +48,34 @@ public sealed class DeletionPolicyServiceTests
         Assert.False(_locationPolicy.IsProtectedLocation(Path.Combine(prefix + "X", "sample.bin")));
     }
 
-    [Fact]
-    public void Evaluate_should_disable_recycle_for_protected_locations_and_keep_open_location_enabled()
+    [Theory]
+    [InlineData(@"C:\ProgramData\Thunder Network", true)]
+    [InlineData(@"C:\ProgramData\Thunder Network\settings.dat", false)]
+    [InlineData(@"C:\Program Files\Example", true)]
+    [InlineData(@"C:\Program Files (x86)\Example\cache.bin", false)]
+    [InlineData(@"C:\Windows\Logs\CBS\CBS.log", false)]
+    public void Evaluate_should_allow_confirmed_manual_recycle_in_protected_locations(string path, bool isDirectory)
     {
-        var decision = _service.Evaluate(@"C:\Windows\Logs\CBS\CBS.log", isDirectory: false);
+        var decision = _service.Evaluate(path, isDirectory);
 
-        Assert.False(decision.CanRecycle);
+        Assert.True(decision.CanRecycle);
         Assert.True(decision.CanOpenLocation);
         Assert.NotEmpty(decision.Reason);
+    }
+
+    [Theory]
+    [InlineData(Environment.SpecialFolder.CommonApplicationData)]
+    [InlineData(Environment.SpecialFolder.ProgramFiles)]
+    [InlineData(Environment.SpecialFolder.Windows)]
+    public void Manual_recycle_should_not_depend_on_location_risk_while_risk_tags_remain(Environment.SpecialFolder folder)
+    {
+        var prefix = Environment.GetFolderPath(folder);
+        Assert.False(string.IsNullOrWhiteSpace(prefix));
+        var path = Path.Combine(prefix, "DiskLens-policy-test", "cache.tmp");
+
+        Assert.True(_service.Evaluate(path, isDirectory: false).CanRecycle);
+        Assert.True(_locationPolicy.IsProtectedLocation(path));
+        Assert.Contains("protected-location", _locationPolicy.GetRiskTags(path, false, FileAttributes.Normal));
     }
 
     [Theory]

@@ -2,6 +2,14 @@
 
 [简体中文](CHANGELOG.md) · [Website & release archive](https://disklens.site/#releases)
 
+## 1.1.3 — 2026-11-22
+
+- Remove the blanket manual-recycling restriction for `ProgramData`, `Program Files`, `Windows`, and their descendants. Location risk and AI deletion advice remain visible; users decide whether to proceed.
+- Apply the same recycling rules to block context menus, file details, and analysis lists.
+- Keep recycling disabled for drive and network-share roots, aggregate display blocks, and while scanning, analyzing with AI, or refreshing. Keep confirmation prompts and Windows permission and file-in-use restrictions.
+- Synchronize the public source with the desktop version's existing cloud connection implementation, retaining its initial direct-connection candidate probing, connection reuse, and route reselection after network changes.
+- Update the package startup guide to clarify the [PolyForm Noncommercial License 1.0.0](LICENSE), commercial authorization requirements, and the boundaries of the private operations console and official donation component.
+
 ## 1.1.2 — 2026-11-18
 
 - Select **Stop matching** or close the app while cloud experience matching is in progress.

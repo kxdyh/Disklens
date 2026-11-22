@@ -8,11 +8,11 @@ Windows 磁盘空间可视化工具，支持多任务扫描与可选的 AI 辅�
 
 [官网与下载](https://disklens.site/) · [历史发行](https://github.com/kxdyh/Disklens/releases) · [问题反馈](https://github.com/kxdyh/Disklens/issues) · [English](README.en.md)
 
-Windows 10 / 11 · x64 · 免费使用
+Windows 10 / 11 · x64 · 非商业用途免费
 
 </div>
 
-> **当前版本：1.1.2。** [官网下载安装包](https://disklens.site/) · [更新日志](CHANGELOG.md)。[1.0.0 预览版](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) 仍可从历史发行下载。
+> **当前版本：1.1.3（2026-11-22）。** [下载 Windows x64 安装包](https://github.com/kxdyh/Disklens/releases/download/v1.1.3/DiskLens-Setup-1.1.3-x64.exe) · [官网](https://disklens.site/) · [更新日志](CHANGELOG.md)。[1.0.0 预览版](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) 仍可从历史发行下载。
 
 ![DiskLens 云端经验用途标签、逐层浏览与悬浮详情演示](assets/demos/cloud-experience-labels.gif)
 
@@ -52,7 +52,7 @@ DiskLens 将文件与文件夹的磁盘占用绘制为矩形方块。先找到�
 
 ## 下载与开始使用
 
-1. 从 [官网](https://disklens.site/) 下载当前的 Windows x64 安装包。
+1. 下载 [DiskLens 1.1.3 Windows x64 安装包](https://github.com/kxdyh/Disklens/releases/download/v1.1.3/DiskLens-Setup-1.1.3-x64.exe)，也可从 [官网](https://disklens.site/) 查看发行信息。
 2. 关闭正在运行的 DiskLens，再运行安装包。若使用旧版 ZIP，请完整解压后运行其中的 `DiskLens.App.exe`。
 3. 选择要扫描的磁盘或文件夹，等待扫描完成后逐层浏览占用情况。
 4. 如需 AI 辅助分析，在设置中配置自己的服务地址、模型和 API Key，再主动发起分析。
@@ -65,6 +65,7 @@ DiskLens 将文件与文件夹的磁盘占用绘制为矩形方块。先找到�
 - **AI 是可选项。** 只有你主动发起分析时，才会调用你配置的服务；分析相关信息会交给所选服务处理，请先确认该服务的数据政策。
 - **API Key 由你自行配置。** 不要将密钥、完整个人路径或敏感文件信息提交到 Issue。
 - **DiskLens 不会自动删除文件。** AI 结论仅供参考，整理前请核实文件用途并备份重要资料。
+- **手动回收由你确认。** 文件块右键菜单、文件详情和分析列表采用同一套操作规则。`ProgramData`、`Program Files`、`Windows` 及其子路径不再因为所在位置被应用整体禁止手动回收；这不代表其中的文件适合删除。磁盘或网络共享根目录、聚合显示的伪块，以及扫描、AI 分析或刷新期间仍不能回收。操作保留确认提示，最终能否完成取决于 Windows 权限和文件占用状态。
 
 ## 反馈问题与建议
 
