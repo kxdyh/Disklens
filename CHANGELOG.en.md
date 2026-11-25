@@ -2,6 +2,10 @@
 
 [简体中文](CHANGELOG.md) · [Website & release archive](https://disklens.site/#releases)
 
+## 1.1.4 — 2026-11-24
+
+- Use the Windows system flow for moving items to the Recycle Bin.
+
 ## 1.1.3 — 2026-11-22
 
 - Fix an issue that prevented some files from being moved to the Recycle Bin.

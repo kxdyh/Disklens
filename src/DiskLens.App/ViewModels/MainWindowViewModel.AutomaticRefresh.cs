@@ -77,7 +77,7 @@ public sealed partial class MainWindowViewModel
     }
 
     private bool AutomaticRefreshBusy => _automaticRefreshRunning || _isVerifyingVisibleEntries || IsScanning || IsScanQueued
-        || IsAnalyzing || IsRefreshing || _sharedLookupCancellation is not null || !CanNavigateVisualTree;
+        || IsAnalyzing || IsRefreshing || HasPendingRecycles || _sharedLookupCancellation is not null || !CanNavigateVisualTree;
 
     private void EnsureAutomaticRefreshMonitor()
     {

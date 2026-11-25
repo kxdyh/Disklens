@@ -1,0 +1,31 @@
+﻿DiskLens 1.1.4
+
+Setup copies the application, adds a Start menu shortcut, and provides a standard uninstaller. You can change the destination. A fixed E: or D: drive is preferred when available.
+
+The runtime is included; you do not need to install .NET separately. Windows requests administrator permission when DiskLens starts so it can read more system directories. Remaining access problems appear in the scan report.
+
+Choose Chinese or English under Settings > Appearance and interaction > Language. Your choice is saved. New AI results include both languages; switching language does not make another model request. Older personal results without English text require a new analysis to generate it.
+
+Scanning runs locally. Optional AI analysis starts only when you request it and confirm the submission list. It sends file metadata to the model service you configure. DiskLens does not delete files automatically or start paid analysis automatically.
+
+File purpose experience sharing is a beta feature and is off by default. It requires agreement to future eligible contributions and successful activation; sharing historical analyses is a separate choice. Eligible contributions include anonymized public path features, structured conclusions, and filtered Chinese and English purpose text. File contents, API keys, complete private paths, and raw scan lists are not uploaded. Free-text filtering does not guarantee absolute anonymity. Matches may be unavailable or rate-limited. You can exclude folders, disable sharing, or withdraw individual or all contributions. Disabling is separate from withdrawal.
+
+Starting with version 1.1, DiskLens checks the official website for update information. It does not download or install updates automatically. You can dismiss a reminder, ignore that version, or visit the website.
+
+This installer contains version 1.1.4. Close any running instance before updating. The update preserves your settings. You can stop cloud matching and retry manually if it fails or is incomplete.
+
+Version 1.1.4 uses the Windows system flow for Move to Recycle Bin. Windows displays progress, files in use, permissions, and confirmation when an item cannot fit in the Recycle Bin. Different items can still be processed in parallel; DiskLens updates blocks only after Windows confirms completion. Drive roots, UNC share roots, and virtual aggregate blocks remain excluded; scan, analysis, and refresh activity temporarily disables related operations.
+
+After a successful installation, Setup removes verified obsolete application components and older DiskLens installers in Downloads and the current installer folder. It keeps the active installer, same/newer versions, personal settings, API keys and analysis records. Files in use or with uncertain ownership are kept.
+
+Uninstalling removes program files and shortcuts. It preserves your settings, API key, analysis cache, and sharing credentials.
+
+DiskLens is free for noncommercial use under the PolyForm Noncommercial License 1.0.0. Separate permission is required for commercial use.
+Source code and license: https://github.com/kxdyh/Disklens
+The maintainer keeps the operations console and the official release's donation component separate.
+Copyright (C) 2026 kxdyh.
+Website: https://disklens.site/
+Issues: https://github.com/kxdyh/Disklens/issues
+
+This installer uses Inno Setup by Jordan Russell and Martijn Laan.
+https://jrsoftware.org/

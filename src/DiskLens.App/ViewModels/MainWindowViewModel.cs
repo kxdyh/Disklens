@@ -161,9 +161,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         SaveAiSetupAndAnalyzeCommand = new AsyncRelayCommand(SaveAiSetupAndAnalyzeAsync,
             () => IsAiSetupOpen && !IsAiSetupSaving && AiSetupCanSave);
         OpenLocationCommand = new AsyncRelayCommand(OpenLocationAsync, _ => CanOpenSelectedLocation());
-        RecycleCommand = new AsyncRelayCommand(RecycleAsync, _ => CanRecycleSelectedNode());
+        RecycleCommand = new AsyncRelayCommand(RecycleAsync,
+            item => ResolveTargetNode(item) is { } node && CanRecycleNode(node), allowConcurrentExecutions: true);
         OpenAnalysisItemLocationCommand = new AsyncRelayCommand(OpenLocationAsync, item => ResolveTargetNode(item) is not null && CanOpenNodeLocation(ResolveTargetNode(item)!));
-        RecycleAnalysisItemCommand = new AsyncRelayCommand(RecycleAsync, item => ResolveTargetNode(item) is not null && CanRecycleNode(ResolveTargetNode(item)!));
+        RecycleAnalysisItemCommand = new AsyncRelayCommand(RecycleAsync,
+            item => ResolveTargetNode(item) is { } node && CanRecycleNode(node), allowConcurrentExecutions: true);
         ZoomIntoNodeCommand = new RelayCommand(
             parameter => ToggleVisualItem(parameter as FileSystemNode),
             parameter => parameter is FileSystemNode { IsDirectory: true } && CanNavigateVisualTree);
@@ -195,6 +197,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         InitializeRefreshCommands();
         InitializeSharedKnowledgeCommands();
         InitializeSettingsNavigation();
+        InitializeRecycling();
     }
 
     public ObservableCollection<AnalysisListItem> AnalysisItems { get; }
@@ -2253,52 +2256,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
         }
     }
 
-    private async Task RecycleAsync(object? parameter)
-    {
-        var node = ResolveTargetNode(parameter);
-        if (node is null)
-        {
-            return;
-        }
-
-        var decision = _deletionPolicyService.Evaluate(node.Path, node.IsDirectory);
-        if (!decision.CanRecycle)
-        {
-            StatusText = decision.Reason;
-            return;
-        }
-
-        var confirmation = LocalizedMessageBox.Show(
-            L.F($"最后确认：是否将以下项目送入回收站？{Environment.NewLine}{Environment.NewLine}{node.Path}{Environment.NewLine}{Environment.NewLine}此操作不会由 AI 自动执行，仍需你本人确认。"),
-            L.T("确认送入回收站"),
-            MessageBoxButton.YesNo,
-            MessageBoxImage.Warning,
-            MessageBoxResult.No);
-
-        if (confirmation != MessageBoxResult.Yes)
-        {
-            StatusText = L.T("已取消送入回收站。");
-            return;
-        }
-
-        try
-        {
-            await _recycleBinService.RecycleAsync(node.Path, node.IsDirectory).ConfigureAwait(true);
-            if (await ApplyLocalRemovalAsync(node).ConfigureAwait(true))
-            {
-                StatusText = L.F($"已送入回收站，并已从当前视图移除：{node.Name}");
-            }
-            else
-            {
-                StatusText = L.F($"已送入回收站，但未能在当前视图中定位该节点：{node.Name}");
-            }
-        }
-        catch (Exception ex)
-        {
-            StatusText = L.F($"送入回收站失败：{ex.Message}");
-        }
-    }
-
     private void CancelCurrentWork()
     {
         CancelRefresh();
@@ -2434,53 +2391,49 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     private async Task<bool> ApplyLocalRemovalAsync(FileSystemNode removedNode)
     {
-        if (ScanRoot is null)
+        await _localRemovalGate.WaitAsync().ConfigureAwait(true);
+        try
         {
-            return false;
-        }
-
-        var originalRoot = ScanRoot;
-        var fallbackParentPath = _scanNodeIndex.FindParentNode(removedNode.Path)?.Path ?? originalRoot.Path;
-        var nextCurrentPath = IsWithinRemovedSubtree(CurrentRoot?.Path, removedNode.Path)
-            ? fallbackParentPath
-            : CurrentRoot?.Path;
-        var nextSelectedPath = IsWithinRemovedSubtree(SelectedNode?.Path, removedNode.Path)
-            ? fallbackParentPath
-            : SelectedNode?.Path;
-
-        var removedFileCount = removedNode.IsDirectory
-            ? removedNode.DescendantFileCount
-            : 1;
-        var removedDirectoryCount = removedNode.IsDirectory
-            ? removedNode.DescendantDirectoryCount
-            : 0;
-
-        var removalResult = await Task.Run(() =>
-        {
-            if (!FileSystemTreeEditor.TryRemovePath(originalRoot, removedNode.Path, out var updatedRoot))
+            // File operations may finish together. Always edit the newest committed
+            // tree and rebase if another snapshot arrives while its index is built.
+            while (!_isDisposed && ScanRoot is { } originalRoot)
             {
-                return null;
+                var currentNode = _scanNodeIndex.FindNode(removedNode.Path);
+                if (currentNode is null) return true;
+                var removalResult = await Task.Run(() =>
+                {
+                    if (!FileSystemTreeEditor.TryRemovePath(originalRoot, removedNode.Path, out var updatedRoot))
+                        return null;
+                    return new LocalRemovalResult(updatedRoot, FileSystemNodeIndex.Build(updatedRoot));
+                }).ConfigureAwait(true);
+                if (_isDisposed) return false;
+                if (!ReferenceEquals(ScanRoot, originalRoot)) continue;
+                if (removalResult is null) return false;
+
+                // Read navigation after the background work so a user can keep
+                // browsing other folders while a large operation is completing.
+                var fallbackParentPath = _scanNodeIndex.FindParentNode(removedNode.Path)?.Path ?? originalRoot.Path;
+                var nextCurrentPath = IsWithinRemovedSubtree(CurrentRoot?.Path, removedNode.Path)
+                    ? fallbackParentPath : CurrentRoot?.Path;
+                var nextSelectedPath = IsWithinRemovedSubtree(SelectedNode?.Path, removedNode.Path)
+                    ? fallbackParentPath : SelectedNode?.Path;
+                _filesScanned = Math.Max(0, _filesScanned - (currentNode.IsDirectory ? currentNode.DescendantFileCount : 1));
+                _directoriesScanned = Math.Max(0, _directoriesScanned - (currentNode.IsDirectory ? currentNode.DescendantDirectoryCount : 0));
+                _bytesDiscovered = removalResult.UpdatedRoot.SizeBytes;
+                _estimatedStorageItemCount = removalResult.UpdatedRoot.EnumerateFiles().Count(node => node.StorageInfo?.IsEstimated == true);
+                RefreshVolumeCapacity(RootPath);
+                ApplySnapshot(removalResult.UpdatedRoot, removalResult.NodeIndex, nextCurrentPath, nextSelectedPath);
+                RebuildAnalysisItems(removalResult.UpdatedRoot);
+                OnPropertyChanged(nameof(FooterText));
+                OnPropertyChanged(nameof(ScanStatusDetailText));
+                return true;
             }
-
-            var nodeIndex = FileSystemNodeIndex.Build(updatedRoot);
-            return new LocalRemovalResult(updatedRoot, nodeIndex);
-        }).ConfigureAwait(true);
-
-        if (removalResult is null)
-        {
             return false;
         }
-
-        _filesScanned = Math.Max(0, _filesScanned - removedFileCount);
-        _directoriesScanned = Math.Max(0, _directoriesScanned - removedDirectoryCount);
-        _bytesDiscovered = removalResult.UpdatedRoot.SizeBytes;
-        _estimatedStorageItemCount = removalResult.UpdatedRoot.EnumerateFiles().Count(node => node.StorageInfo?.IsEstimated == true);
-        RefreshVolumeCapacity(RootPath);
-        ApplySnapshot(removalResult.UpdatedRoot, removalResult.NodeIndex, nextCurrentPath, nextSelectedPath);
-        RebuildAnalysisItems(removalResult.UpdatedRoot);
-        OnPropertyChanged(nameof(FooterText));
-        OnPropertyChanged(nameof(ScanStatusDetailText));
-        return true;
+        finally
+        {
+            _localRemovalGate.Release();
+        }
     }
 
     private void RebuildAnalysisItems(FileSystemNode root)
@@ -3123,10 +3076,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IDisposable
 
     private bool CanRecycleNode(FileSystemNode node)
     {
-        return !IsScanning
+        return !_isDisposed
+               && !IsScanning
                && !IsAnalyzing
                && !IsRefreshing
                && !IsAggregateNode(node)
+               && !IsPendingRecyclePath(node.Path)
+               && !_recycleBinService.IsPathBusy(node.Path)
                && _deletionPolicyService.Evaluate(node.Path, node.IsDirectory).CanRecycle;
     }
 

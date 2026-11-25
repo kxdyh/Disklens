@@ -55,11 +55,12 @@ public sealed class DirectoryRefreshBehaviorTests
         File.WriteAllText(deleted, "Delete fixture");
         File.WriteAllText(Path.Combine(fixture.Path, "keep.txt"), "Keep");
         using var vm = CreateViewModel(Scan(fixture.Path));
+        var previousStatus = vm.StatusText;
         File.Delete(deleted);
         Complete(vm.VerifyVisibleEntriesAsync());
         Assert.DoesNotContain(vm.ScanRoot!.EnumerateFiles(), node => node.Path == deleted);
         Assert.Single(vm.ScanRoot.Children);
-        Assert.Contains("已自动同步", vm.StatusText);
+        Assert.Equal(previousStatus, vm.StatusText);
     });
 
     [Fact]

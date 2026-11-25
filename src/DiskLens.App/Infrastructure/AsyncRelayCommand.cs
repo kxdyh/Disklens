@@ -6,31 +6,35 @@ public sealed class AsyncRelayCommand : ICommand
 {
     private readonly Func<object?, Task> _executeAsync;
     private readonly Predicate<object?>? _canExecute;
-    private bool _isRunning;
+    private readonly bool _allowConcurrentExecutions;
+    private int _runningCount;
 
-    public AsyncRelayCommand(Func<Task> executeAsync, Func<bool>? canExecute = null)
-        : this(_ => executeAsync(), canExecute is null ? null : _ => canExecute())
+    public AsyncRelayCommand(Func<Task> executeAsync, Func<bool>? canExecute = null, bool allowConcurrentExecutions = false)
+        : this(_ => executeAsync(), canExecute is null ? null : _ => canExecute(), allowConcurrentExecutions)
     {
     }
 
-    public AsyncRelayCommand(Func<object?, Task> executeAsync, Predicate<object?>? canExecute = null)
+    public AsyncRelayCommand(Func<object?, Task> executeAsync, Predicate<object?>? canExecute = null, bool allowConcurrentExecutions = false)
     {
         _executeAsync = executeAsync;
         _canExecute = canExecute;
+        _allowConcurrentExecutions = allowConcurrentExecutions;
     }
 
     public event EventHandler? CanExecuteChanged;
 
-    public bool CanExecute(object? parameter) => !_isRunning && (_canExecute?.Invoke(parameter) ?? true);
+    public bool CanExecute(object? parameter) => (_allowConcurrentExecutions || _runningCount == 0) && (_canExecute?.Invoke(parameter) ?? true);
 
-    public async void Execute(object? parameter)
+    public async void Execute(object? parameter) => await ExecuteAsync(parameter).ConfigureAwait(true);
+
+    public async Task ExecuteAsync(object? parameter)
     {
         if (!CanExecute(parameter))
         {
             return;
         }
 
-        _isRunning = true;
+        _runningCount++;
         RaiseCanExecuteChanged();
         try
         {
@@ -38,7 +42,7 @@ public sealed class AsyncRelayCommand : ICommand
         }
         finally
         {
-            _isRunning = false;
+            _runningCount--;
             RaiseCanExecuteChanged();
         }
     }

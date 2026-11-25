@@ -22,6 +22,12 @@ public partial class App : Application
 
     protected override async void OnStartup(StartupEventArgs e)
     {
+        if (FileOperationWorker.IsWorkerInvocation(e.Args))
+        {
+            ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            Shutdown(await FileOperationWorker.RunAsync(e.Args).ConfigureAwait(true));
+            return;
+        }
         base.OnStartup(e);
 
         var settingsStore = new AppSettingsStore();

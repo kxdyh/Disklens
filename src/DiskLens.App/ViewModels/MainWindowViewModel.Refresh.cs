@@ -39,7 +39,7 @@ public sealed partial class MainWindowViewModel
     private void InitializeRefreshCommands()
     {
         RefreshCurrentDirectoryCommand = new AsyncRelayCommand(RefreshCurrentDirectoryAsync,
-            () => ScanRoot is not null && CanNavigateVisualTree && !IsAnalyzing && !IsRefreshing && !_isVerifyingVisibleEntries);
+            () => ScanRoot is not null && CanNavigateVisualTree && !IsAnalyzing && !IsRefreshing && !_isVerifyingVisibleEntries && !HasPendingRecycles);
         InitializeAutomaticRefresh();
     }
 
@@ -54,7 +54,7 @@ public sealed partial class MainWindowViewModel
     /// <summary>Explicitly rescan the current real directory, preserving other task trees and the old view until commit.</summary>
     public async Task RefreshCurrentDirectoryAsync()
     {
-        if (_isDisposed || ScanRoot is not { } originalRoot || IsScanning || IsAnalyzing || IsRefreshing || _isVerifyingVisibleEntries || _automaticRefreshRunning) return;
+        if (_isDisposed || ScanRoot is not { } originalRoot || IsScanning || IsAnalyzing || IsRefreshing || _isVerifyingVisibleEntries || _automaticRefreshRunning || HasPendingRecycles) return;
         var target = GetRefreshTarget();
         if (target is null) return;
         var cancellation = new CancellationTokenSource();
@@ -104,7 +104,7 @@ public sealed partial class MainWindowViewModel
     /// <summary>Called on reactivation/tab selection: at most 50 metadata probes, no recursive disk scan.</summary>
     public async Task VerifyVisibleEntriesAsync()
     {
-        if (_isDisposed || ScanRoot is not { } originalRoot || !CanNavigateVisualTree || IsAnalyzing || IsRefreshing || _isVerifyingVisibleEntries || _automaticRefreshRunning) return;
+        if (_isDisposed || ScanRoot is not { } originalRoot || !CanNavigateVisualTree || IsAnalyzing || IsRefreshing || _isVerifyingVisibleEntries || _automaticRefreshRunning || HasPendingRecycles) return;
         var displayPath = CurrentRoot?.Path;
         if (_lastVerifiedDisplayPath == displayPath && DateTimeOffset.UtcNow - _lastVisibleVerification < TimeSpan.FromSeconds(3)) return;
         _lastVerifiedDisplayPath = displayPath;
@@ -153,7 +153,7 @@ public sealed partial class MainWindowViewModel
     }
 
     private bool CanCommitRefresh(FileSystemNode originalRoot, CancellationTokenSource cancellation) =>
-        CanFinishRefresh(cancellation) && ReferenceEquals(ScanRoot, originalRoot) && !IsScanning && !IsAnalyzing;
+        CanFinishRefresh(cancellation) && ReferenceEquals(ScanRoot, originalRoot) && !IsScanning && !IsAnalyzing && !HasPendingRecycles;
 
     private bool CanFinishRefresh(CancellationTokenSource cancellation) =>
         !_isDisposed && !cancellation.IsCancellationRequested && ReferenceEquals(_refreshCancellation, cancellation);

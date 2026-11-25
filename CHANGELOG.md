@@ -2,6 +2,10 @@
 
 [English](CHANGELOG.en.md) · [官网下载与历史版本](https://disklens.site/#releases)
 
+## 1.1.4 — 2026-11-24
+
+- 移入回收站改用 Windows 系统流程。
+
 ## 1.1.3 — 2026-11-22
 
 - 修复部分文件无法移入回收站的问题

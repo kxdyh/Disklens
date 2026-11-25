@@ -1,0 +1,38 @@
+[
+  {
+    "name": "使用说明.md",
+    "sha256": "bd9162264511e1e3e5fd9fdec340c9a1e2d6995a306ede5f2a6c356b67330edc"
+  },
+  {
+    "name": "使用说明.md",
+    "sha256": "c304d6ffbaba41632f315c8a228daf776f7dcaa0f1346428205b43889c56a33a"
+  },
+  {
+    "name": "DiskLens.App.exe",
+    "sha256": "448eda379a04176e105877144c5e8b2fdc7c9721588629f618ccd039fe86f431"
+  },
+  {
+    "name": "DiskLens.App.exe",
+    "sha256": "57f6e854b189367dd4fe102d21f5ebf95a11b4e89676f34a0597e3d01ab980ab"
+  },
+  {
+    "name": "LICENSE",
+    "sha256": "ffcca38841adb694b6f380647e15f17c446a4d1656fed51a1e2041d064c94cc8"
+  },
+  {
+    "name": "NOTICE.md",
+    "sha256": "61ccb79e70f4c02b7d172e4312817304dcdc036bc35ab21a01562a0ccf6d796e"
+  },
+  {
+    "name": "THIRD-PARTY-NOTICES.txt",
+    "sha256": "14d0b28e77fe001b46612f54c4132a287bbfb9546d48bd57a75427900867de87"
+  },
+  {
+    "name": "UserGuide.en.md",
+    "sha256": "5dd96685a43cafaa4e5514a288c1ac2057d866c4b0201d82b399ced0e0428de8"
+  },
+  {
+    "name": "UserGuide.en.md",
+    "sha256": "ddcc47db7d818fda45469ebd5d97b15ea9389ca194d82398aca257457cffdd98"
+  }
+]

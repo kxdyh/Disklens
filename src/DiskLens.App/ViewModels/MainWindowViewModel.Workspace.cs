@@ -254,6 +254,7 @@ public sealed partial class MainWindowViewModel
         }
 
         _isDisposed = true;
+        _recycleBinService.StateChanged -= RecycleService_OnStateChanged;
         CancelSharedLookup();
         if (SharedRuntime is not null)
         {

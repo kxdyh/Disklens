@@ -1,11 +1,13 @@
-# DiskLens 1.1.3 · Windows x64 启动说明
+# DiskLens 1.1.4 · Windows x64 启动说明
 
-发布日期：2026-11-22。适用于 Windows 10 / 11 x64。
+发布日期：2026-11-24。适用于 Windows 10 / 11 x64。
+
+本目录保留启动说明和提示词模板。可运行的安装包和免安装 ZIP 请从 [1.1.4 发行页](https://github.com/kxdyh/Disklens/releases/tag/v1.1.4)或[官网](https://disklens.site/#download)下载；仓库自动生成的源码压缩包需自行构建。
 
 ## 安装与启动
 
 1. 退出正在运行的 DiskLens。
-2. 使用安装包时，运行 [DiskLens-Setup-1.1.3-x64.exe](https://github.com/kxdyh/Disklens/releases/download/v1.1.3/DiskLens-Setup-1.1.3-x64.exe)，完成安装后从快捷方式启动。
+2. 使用安装包时，运行 [DiskLens-Setup-1.1.4-x64.exe](https://disklens.site/#download)，完成安装后从快捷方式启动。
 3. 使用文件夹版时，将整个文件夹完整解压到空间充足的位置，再双击 `DiskLens.App.exe`。请保留同目录内的依赖文件。
 4. 如 Windows 显示权限确认，请核实程序来源后再继续。
 
@@ -22,11 +24,11 @@
 
 快捷键：`Ctrl+T` 新扫描，`Ctrl+Tab` 切换任务，`Ctrl+W` 关闭任务，`Ctrl+1` 首页，`Ctrl+Home` 回到当前扫描根目录。
 
-## 1.1.3 手动回收规则
+## 1.1.4 手动回收规则
 
 `ProgramData`、`Program Files`、`Windows` 及其子路径不再因为所在位置被应用整体禁止手动回收。文件块右键菜单、文件详情和分析列表采用同一套规则。
 
-磁盘或网络共享根目录、聚合显示的伪块，以及扫描、AI 分析或刷新期间仍不能回收。手动回收保留确认提示，Windows 权限和文件占用限制继续生效。
+磁盘或网络共享根目录、聚合显示的伪块，以及扫描、AI 分析或刷新期间仍不能回收。点击“移入回收站”直接调用 Windows 系统删除流程，由系统显示进度、占用、权限、重试和超限时的永久删除确认。应用只在系统确认完成后更新视图。
 
 DiskLens 不会自动删除文件。位置风险和 AI 分析结论仅供参考；能够手动回收不代表适合删除。操作前请核实文件用途，备份重要资料。
 

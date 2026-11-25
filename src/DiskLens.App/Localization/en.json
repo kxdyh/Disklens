@@ -1034,5 +1034,16 @@
   "发布于 {0:yyyy-MM-dd HH:mm}": "Published {0:yyyy-MM-dd HH:mm}",
   "贡献计划暂时暂停接纳新用户，请稍后再试。磁盘扫描可继续使用。": "The contribution program is temporarily closed to new users. Please try again later. Disk scanning is still available.",
   "报告问题或提出建议 · GitHub Issues ↗": "Report a problem or suggest an improvement · GitHub Issues ↗",
-  "暂时无法打开浏览器，请访问 github.com/kxdyh/Disklens/issues。": "Unable to open the browser. Please visit github.com/kxdyh/Disklens/issues."
+  "暂时无法打开浏览器，请访问 github.com/kxdyh/Disklens/issues。": "Unable to open the browser. Please visit github.com/kxdyh/Disklens/issues.",
+  "确认永久删除": "Confirm permanent deletion",
+  "此项目超出回收站限制，或所在位置不支持回收。是否永久删除以下项目？{0}{1}{2}{3}{4}永久删除不会进入回收站，无法从回收站恢复。选择“否”将保留尚未删除的内容。": "This item exceeds the Recycle Bin limit, or its location does not support recycling. Permanently delete this item?{0}{1}{2}{3}{4}It will not go to the Recycle Bin and cannot be restored from it. Choose No to keep any content that has not been deleted.",
+  "正在移入回收站：{0}（进行中 {1} 项）": "Moving to the Recycle Bin: {0} ({1} operations in progress)",
+  "正在永久删除：{0}（进行中 {1} 项）": "Permanently deleting: {0} ({1} operations in progress)",
+  "已永久删除：{0}": "Permanently deleted: {0}",
+  "已取消永久删除，尚未删除的内容已保留。": "Permanent deletion cancelled. Content that has not been deleted has been kept.",
+  "文件操作已取消，未完成的内容已保留。": "File operation cancelled. Unfinished content has been kept.",
+  "文件操作未完成：{0}": "File operation did not finish: {0}",
+  "Windows 正在处理文件：{0}（进行中 {1} 项）": "Windows is processing: {0} ({1} operations in progress)",
+  "Windows 文件操作已完成，并已从当前视图移除：{0}": "Windows completed the operation. Removed from the current view: {0}",
+  "Windows 文件操作已完成，但未能在当前视图中定位该节点：{0}": "Windows completed the operation, but the item could not be found in the current view: {0}"
 }

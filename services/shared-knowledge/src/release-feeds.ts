@@ -1,9 +1,17 @@
 import type { Database } from "./worker.ts";
 
 type Release = { id: string; version: string; channel: string; build: string; package_type: string; notes_json: string;
-  notes_en_json: string; published_at: number | null; available: number; filename: string; artifact_key: string; bytes: number; sha256: string };
-const columns = "id,version,channel,build,package_type,notes_json,notes_en_json,published_at,available,filename,artifact_key,bytes,sha256";
+  notes_en_json: string; published_at: number | null; available: number; filename: string; artifact_key: string; bytes: number; sha256: string;
+  portable_status: string; portable_filename: string; portable_artifact_key: string; portable_bytes: number; portable_sha256: string };
+const columns = "id,version,channel,build,package_type,notes_json,notes_en_json,published_at,available,filename,artifact_key,bytes,sha256,portable_status,portable_filename,portable_artifact_key,portable_bytes,portable_sha256";
 const downloadUrl = (row: Release) => `https://assets.disklens.site/${row.artifact_key.split("/").map(encodeURIComponent).join("/")}`;
+const portableArtifact = (row: Release) => row.package_type === "installer" && row.portable_status === "ready"
+  && row.portable_artifact_key && row.portable_bytes > 0 ? {
+    filename: row.portable_filename,
+    path: `https://assets.disklens.site/${row.portable_artifact_key.split("/").map(encodeURIComponent).join("/")}`,
+    url: `https://assets.disklens.site/${row.portable_artifact_key.split("/").map(encodeURIComponent).join("/")}`,
+    bytes: row.portable_bytes, sha256: row.portable_sha256,
+  } : null;
 const date = (row: Release) => new Date(row.published_at!).toISOString().slice(0, 10);
 const notes = (row: Release) => ({ notes: JSON.parse(row.notes_json) as string[],
   ...(row.notes_en_json !== "[]" ? { notesEn: JSON.parse(row.notes_en_json) as string[] } : {}) });
@@ -19,7 +27,8 @@ export async function handleReleaseFeeds(request: Request, env: { DB: Database }
       const rows = await env.DB.prepare(`SELECT ${columns} FROM releases WHERE published_at IS NOT NULL ORDER BY published_at DESC,id LIMIT 100`).all<Release>();
       return json({ schemaVersion: 1, releases: rows.results.map(row => ({ version: row.version, date: date(row),
         channel: row.available ? row.channel : "withdrawn", available: !!row.available, ...notes(row),
-        ...(row.available ? { [row.package_type]: downloadUrl(row) } : {}) })) });
+        ...(row.available ? { [row.package_type]: downloadUrl(row),
+          ...(portableArtifact(row) ? { portable: portableArtifact(row)!.url } : {}) } : {}) })) });
     }
     const row = await env.DB.prepare(`SELECT ${columns.split(",").map(value => `r.${value}`).join(",")} FROM releases r
       JOIN release_state s ON s.latest_id=r.id WHERE s.id=1 AND r.available=1 AND r.package_status='ready'`).first<Release>();
@@ -29,7 +38,8 @@ export async function handleReleaseFeeds(request: Request, env: { DB: Database }
     if (path === "/downloads/manifest.json" || path === "/v1/releases/manifest.json") {
       const artifact = { filename: row.filename, path: downloadUrl(row), url: downloadUrl(row), bytes: row.bytes, sha256: row.sha256 };
       return json({ version: row.version, channel: row.channel === "stable" ? "正式版" : "预览版", platform: "Windows x64", date: date(row),
-        build: row.build, ...artifact, packageType: row.package_type, [row.package_type]: artifact });
+        build: row.build, ...artifact, packageType: row.package_type, [row.package_type]: artifact,
+        ...(portableArtifact(row) ? { portable: portableArtifact(row) } : {}) });
     }
     return json({ error: "not_found" }, 404);
   } catch { return json({ error: "releases_temporarily_unavailable" }, 503); }
