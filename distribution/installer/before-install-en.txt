@@ -1,4 +1,4 @@
-﻿DiskLens 1.1.4
+DiskLens 1.1.5
 
 Setup copies the application, adds a Start menu shortcut, and provides a standard uninstaller. You can change the destination. A fixed E: or D: drive is preferred when available.
 
@@ -12,9 +12,9 @@ File purpose experience sharing is a beta feature and is off by default. It requ
 
 Starting with version 1.1, DiskLens checks the official website for update information. It does not download or install updates automatically. You can dismiss a reminder, ignore that version, or visit the website.
 
-This installer contains version 1.1.4. Close any running instance before updating. The update preserves your settings. You can stop cloud matching and retry manually if it fails or is incomplete.
+This installer contains version 1.1.5. Close any running instance before updating. The update preserves your settings. You can stop cloud matching and retry manually if it fails or is incomplete.
 
-Version 1.1.4 uses the Windows system flow for Move to Recycle Bin. Windows displays progress, files in use, permissions, and confirmation when an item cannot fit in the Recycle Bin. Different items can still be processed in parallel; DiskLens updates blocks only after Windows confirms completion. Drive roots, UNC share roots, and virtual aggregate blocks remain excluded; scan, analysis, and refresh activity temporarily disables related operations.
+Version 1.1.5 uses the Windows system flow for Move to Recycle Bin. Windows displays progress, files in use, permissions, and confirmation when an item cannot fit in the Recycle Bin. Different items can still be processed in parallel; DiskLens updates blocks only after Windows confirms completion. Drive roots, UNC share roots, and virtual aggregate blocks remain excluded; scan, analysis, and refresh activity temporarily disables related operations.
 
 After a successful installation, Setup removes verified obsolete application components and older DiskLens installers in Downloads and the current installer folder. It keeps the active installer, same/newer versions, personal settings, API keys and analysis records. Files in use or with uncertain ownership are kept.
 

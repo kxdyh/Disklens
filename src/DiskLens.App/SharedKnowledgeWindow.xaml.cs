@@ -28,6 +28,11 @@ public partial class SharedKnowledgeWindow : Window
     private bool _retryInProgress;
     private enum FeedbackKind { Info, Busy, Error, Success }
     private bool _agreementRead;
+    private TimeProvider _agreementClock = TimeProvider.System;
+    private readonly DispatcherTimer _agreementTimer = new(DispatcherPriority.Background)
+        { Interval = TimeSpan.FromMilliseconds(100) };
+    private TimeSpan _agreementRemaining = TimeSpan.FromSeconds(5);
+    private long? _agreementStartedAt;
     private bool _initialized;
     private bool _scopeReviewed;
     private bool _enableCompleted;
@@ -63,6 +68,12 @@ public partial class SharedKnowledgeWindow : Window
         Resources["DisclosureEndTime"] = System.Windows.Media.Animation.KeyTime.FromTimeSpan(disclosureTime);
         Resources["DialogIllustrationBrush"] = new SolidColorBrush((Color)ColorConverter.ConvertFromString(dark ? "#8BC6A6" : "#527A64"));
         InitializeComponent();
+        _agreementTimer.Tick += AgreementCountdown_OnTick;
+        IsVisibleChanged += (_, _) =>
+        {
+            if (IsVisible) ResumeAgreementCountdown();
+            else PauseAgreementCountdown();
+        };
         WindowLanguage.Attach(this);
         WindowLanguage.Register(this, () => OnLanguageChanged(this, new System.ComponentModel.PropertyChangedEventArgs(nameof(L.Language))));
         FitWindowToWorkArea();
@@ -74,7 +85,7 @@ public partial class SharedKnowledgeWindow : Window
             _initialized = true;
             SetPage(openManagement ? 3 : 0);
         });
-        Closing += (_, _) => { _closeRequested = true; _lifetime.Cancel(); };
+        Closing += (_, _) => { _closeRequested = true; PauseAgreementCountdown(); _lifetime.Cancel(); };
         Closed += (_, _) => { if (!_busy) _lifetime.Dispose(); };
     }
 
@@ -87,6 +98,7 @@ public partial class SharedKnowledgeWindow : Window
         DialogHeadingText.Text = _page == 3 ? L.T("文件用途经验共享管理") : L.T("文件用途经验共享");
         if (!string.IsNullOrWhiteSpace(FeedbackText.Text)) SetFeedback(L.T(FeedbackText.Text), _feedbackKind);
         if (_formatPreviewText is not null) PreviewText.Text = _formatPreviewText();
+        UpdateAgreementCountdownText();
     }
 
     private void Render(bool preserveConsent = false)
@@ -102,10 +114,13 @@ public partial class SharedKnowledgeWindow : Window
         {
         IncludeHistory.IsChecked = _settings.ShareHistory;
         AcceptFuture.IsChecked = _settings.Enabled;
-        // Existing consent remains in storage. Each new enable/save interaction still requires reading this dialog.
+        // Stored consent does not preselect a new enable/save decision.
         AcceptAgreement.IsChecked = false;
         AcceptAgreement.IsEnabled = false;
         _agreementRead = false;
+        PauseAgreementCountdown();
+        _agreementRemaining = TimeSpan.FromSeconds(5);
+        UpdateAgreementCountdownText();
         AgreementScroll.ScrollToHome();
         }
         ExclusionList.ItemsSource = (_settings.ExcludedPaths ?? []).ToList();
@@ -114,7 +129,7 @@ public partial class SharedKnowledgeWindow : Window
         EnabledNotice.Visibility = _settings.Enabled ? Visibility.Visible : Visibility.Collapsed;
         DisableButton.Visibility = _settings.Enabled ? Visibility.Visible : Visibility.Collapsed;
         }
-        finally { _rendering = false; UpdateControls(); }
+        finally { _rendering = false; ResumeAgreementCountdown(); UpdateControls(); }
     }
 
     private void FitWindowToWorkArea()
@@ -131,6 +146,7 @@ public partial class SharedKnowledgeWindow : Window
     private void SetPage(int page)
     {
         if (IntroPage is null || _closeRequested) return;
+        if (page != 2) PauseAgreementCountdown();
         _page = Math.Clamp(page, 0, 3);
         IntroPage.Visibility = _page == 0 ? Visibility.Visible : Visibility.Collapsed;
         ScopePage.Visibility = _page == 1 ? Visibility.Visible : Visibility.Collapsed;
@@ -156,6 +172,7 @@ public partial class SharedKnowledgeWindow : Window
         }
         PageScroll.ScrollToHome();
         if (_page == 2) Dispatcher.BeginInvoke(DispatcherPriority.Loaded, new Action(() => AgreementScroll.Focus()));
+        ResumeAgreementCountdown();
         UpdateControls();
     }
 
@@ -319,7 +336,7 @@ public partial class SharedKnowledgeWindow : Window
             && AcceptAgreement.IsChecked == true && AcceptFuture.IsChecked == true;
         NextButton.IsEnabled = PreviousButton.IsEnabled = _initialized && !_busy;
         DisableButton.IsEnabled = _initialized && !_busy && _settings.Enabled;
-        AcceptAgreement.IsEnabled = _agreementRead && !_busy;
+        AcceptAgreement.IsEnabled = _page == 2 && _agreementRead && !_busy;
         AcceptFuture.IsEnabled = IncludeHistory.IsEnabled = !_busy;
         PreviewButton.IsEnabled = !_busy;
         ImportHistoryButton.IsEnabled = !_busy && _history is not null && _settings.Enabled && _settings.ShareHistory;
@@ -334,14 +351,49 @@ public partial class SharedKnowledgeWindow : Window
     private void Agreement_OnExpanded(object sender, RoutedEventArgs e)
     { UpdateControls(); }
 
-    private void Agreement_OnScrollChanged(object sender, ScrollChangedEventArgs e)
+    private TimeSpan AgreementTimeRemaining => _agreementStartedAt is { } started
+        ? TimeSpan.FromTicks(Math.Max(0, (_agreementRemaining - _agreementClock.GetElapsedTime(started)).Ticks))
+        : _agreementRemaining;
+
+    private void ResumeAgreementCountdown()
     {
-        if (_rendering || _page != 2 || !AgreementScroll.IsVisible || _agreementRead) return;
-        // Require a real offset change in the visible agreement, not initial layout, expansion or a resize.
-        if (e.VerticalChange <= 0 || AgreementScroll.ScrollableHeight <= 0
-            || AgreementScroll.ViewportHeight <= 0 || AgreementScroll.VerticalOffset < AgreementScroll.ScrollableHeight - 1) return;
-        _agreementRead = true;
-        UpdateControls();
+        if (_rendering || _closeRequested || _page != 2 || !IsVisible || _agreementRead) return;
+        _agreementStartedAt ??= _agreementClock.GetTimestamp();
+        _agreementTimer.Start();
+        AgreementCountdown_OnTick(this, EventArgs.Empty);
+    }
+
+    private void PauseAgreementCountdown()
+    {
+        _agreementRemaining = AgreementTimeRemaining;
+        _agreementStartedAt = null;
+        _agreementTimer.Stop();
+        UpdateAgreementCountdownText();
+    }
+
+    private void AgreementCountdown_OnTick(object? sender, EventArgs e)
+    {
+        if (_closeRequested || _page != 2 || !IsVisible)
+        {
+            PauseAgreementCountdown();
+            return;
+        }
+        if (AgreementTimeRemaining <= TimeSpan.Zero)
+        {
+            _agreementRemaining = TimeSpan.Zero;
+            _agreementStartedAt = null;
+            _agreementTimer.Stop();
+            _agreementRead = true;
+            UpdateControls();
+        }
+        UpdateAgreementCountdownText();
+    }
+
+    private void UpdateAgreementCountdownText()
+    {
+        if (AgreementCountdownText is null) return;
+        AgreementCountdownText.Text = L.T("请仔细阅读协议内容再确定是否参与此测试功能")
+            + (!_agreementRead ? L.F($" - {Math.Ceiling(AgreementTimeRemaining.TotalSeconds):0} s") : string.Empty);
     }
 
     private async void AddExclusion_OnClick(object sender, RoutedEventArgs e)
@@ -410,7 +462,7 @@ public partial class SharedKnowledgeWindow : Window
     {
         if (_busy || _enableCompleted) return;
         if (_page != 2 || !_agreementRead || AcceptAgreement.IsChecked != true || AcceptFuture.IsChecked != true)
-        { SetPage(2); SetFeedback(L.T("请先滚动读完协议，并明确同意今后贡献。保持关闭也可继续使用应用。")); return; }
+        { SetPage(2); SetFeedback(L.T("请先等待阅读倒计时结束，并明确同意协议与今后贡献。保持关闭也可继续使用应用。")); return; }
         if (!_scopeReviewed)
         { SetFeedback(L.T("请先预览共享范围，确认不共享清单后再开启。预览不会连接经验服务器。")); return; }
         var exclusions = ExclusionPaths();

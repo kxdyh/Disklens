@@ -171,20 +171,25 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
     });
 
     [Fact]
-    public void Shared_upload_failure_is_visible_in_the_main_status_after_analysis() => OnSta(() =>
+    public void Shared_upload_failure_keeps_results_and_reports_background_retry_only_in_the_footer() => OnSta(() =>
     {
-        using var fixture = new Fixture(configured: true);
-        fixture.Enable();
+        using var fixture = CreateUploadFixtureWithSettledLookup();
         fixture.Client.FailContributions = true;
-        fixture.ApplyScan();
         fixture.Analyze();
+        Complete(fixture.Vm.RefreshSharedOutboxStatusAsync());
 
         Assert.True(fixture.Provider.RequestedPaths.Count > 0);
         Assert.True(fixture.Client.ContributionCalls > 0);
-        Assert.Contains("上传至云端经验库失败", fixture.Vm.SharedExperienceSummaryText);
-        Assert.Contains("上传至云端经验库失败", fixture.Vm.StatusText);
-        Assert.DoesNotContain("个人 AI", fixture.Vm.StatusText);
-        Assert.DoesNotContain("自己的 AI", fixture.Vm.StatusText);
+        Assert.True(fixture.Runtime.Settings.LoadAsync().GetAwaiter().GetResult().Enabled);
+        Assert.True(fixture.Runtime.Outbox.PendingCountAsync().GetAwaiter().GetResult() > 0);
+        Assert.Contains(fixture.Vm.ScanRoot!.DescendantsAndSelf(), node => node.Analysis is { } analysis && !analysis.LooksLikeFallback());
+        Assert.Contains("上传失败", FooterDetail(fixture.Vm));
+        Assert.Contains("第 1/3 次", FooterDetail(fixture.Vm));
+        Assert.Contains("间隔 1 分钟", FooterDetail(fixture.Vm));
+        Assert.False(fixture.Vm.IsFooterCloudActivityVisible);
+        Assert.False(fixture.Vm.IsOfflineAlertVisible);
+        Assert.False(fixture.Vm.IsRefreshing);
+        Assert.True(fixture.Vm.AnalyzeCommand.CanExecute(null));
     });
 
     [Fact]
@@ -396,13 +401,10 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
         public void Analyze()
         {
             Assert.True(Vm.AnalyzeCommand.CanExecute(null));
-            var running = Vm.AnalyzeCommand.GetType().GetField("_isRunning", BindingFlags.Instance | BindingFlags.NonPublic);
-            Assert.NotNull(running);
-            Vm.AnalyzeCommand.Execute(null);
             // Local history is read before IsAnalyzing becomes true. The command
             // owns preparation and cleanup; its business predicate can remain
             // false after completion when an unconfigured provider opens setup.
-            WaitUntil(() => running.GetValue(Vm.AnalyzeCommand) is false);
+            Complete(Vm.AnalyzeCommand.ExecuteAsync(null));
             Assert.False(Vm.IsAnalyzing);
         }
 

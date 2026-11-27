@@ -2,6 +2,11 @@
 
 [简体中文](CHANGELOG.md) · [Website & release archive](https://disklens.site/#releases)
 
+## 1.1.5 — 2026-11-28
+
+- Retry failed cloud experience uploads in the background at one-minute intervals, up to three times.
+- Enable agreement consent after a five-second reading countdown, without requiring scrolling to the bottom.
+
 ## 1.1.4 — 2026-11-24
 
 - Use the Windows system flow for moving items to the Recycle Bin.

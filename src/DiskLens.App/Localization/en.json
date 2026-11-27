@@ -493,7 +493,7 @@
   "文件用途经验共享已停用，未发送反馈。": "Knowledge sharing is disabled. No feedback sent.",
   "文件用途经验共享已开启": "File knowledge sharing enabled",
   "文件用途经验共享测试协议与数据说明": "File knowledge sharing beta agreement and data terms",
-  "文件用途经验共享测试协议，请滚动至末尾阅读": "Knowledge sharing beta agreement. Scroll to the end to read.",
+  "文件用途经验共享测试协议，请仔细阅读": "Knowledge sharing beta agreement. Please read carefully.",
   "文件用途经验共享示意动画。": "File knowledge sharing animation.",
   "文件用途经验共享示意动画：他人的 AI 先分析文件夹用途；去除私人路径后的匿名信息与结论卡汇入云端；校验和匹配后，另一人的文件夹旁显示用途说明。文件夹本体不上传。未来合格的 AI 结论继续帮助他人。": "Animation: another person analyzes a folder; anonymous public paths and findings reach the cloud. After validation and matching, a purpose appears beside another person's folder. Folders themselves are not uploaded. Future eligible findings help others.",
   "文件用途经验共享管理": "Manage file knowledge sharing",
@@ -702,7 +702,6 @@
   "访问被拒绝，当前账户没有读取权限": "Access denied. This account lacks read permission",
   "请先在树图或分析列表中选择项目。": "Select an item in the map or analysis list first.",
   "请先完成一次扫描。": "Complete a scan first.",
-  "请先滚动读完协议，并明确同意今后贡献。保持关闭也可继续使用应用。": "Scroll through the agreement and consent to future contributions first. You can keep using the app with sharing disabled.",
   "请先选中一条贡献。": "Select a contribution first.",
   "请先配置分析服务。保存后请再次点击“重新分析”提交已勾选项目，API 调用可能产生费用。": "Configure analysis first. After saving, select Reanalyze again to submit checked items. API calls may incur charges.",
   "请先预览共享范围，确认不共享清单后再开启。预览不会连接经验服务器。": "Preview the scope and check exclusions before enabling. The preview does not contact the knowledge server.",
@@ -775,7 +774,7 @@
   "高风险": "High risk",
   "默认关闭。单独同意后，共享经过脱敏的合格结论；所有分析仅供参考。": "Off by default. With separate consent, eligible anonymized findings are shared. All analysis is for reference.",
   "（含 {0} 项估算）": " ({0} estimated items)",
-  "（将上述协议阅读完毕，才可勾选）": "(Read the entire agreement before checking)",
+  "（阅读倒计时结束后，才可勾选）": "(Available after the reading countdown ends)",
   "（跳过 {0} 个重解析点）": " ({0} reparse points skipped)",
   "，仅供参考": ", for reference only",
   "已选 {0} 项": "{0} selected",
@@ -1046,5 +1045,8 @@
   "文件操作未完成：{0}": "File operation did not finish: {0}",
   "Windows 正在处理文件：{0}（进行中 {1} 项）": "Windows is processing: {0} ({1} operations in progress)",
   "Windows 文件操作已完成，并已从当前视图移除：{0}": "Windows completed the operation. Removed from the current view: {0}",
-  "Windows 文件操作已完成，但未能在当前视图中定位该节点：{0}": "Windows completed the operation, but the item could not be found in the current view: {0}"
+  "Windows 文件操作已完成，但未能在当前视图中定位该节点：{0}": "Windows completed the operation, but the item could not be found in the current view: {0}",
+  "请仔细阅读协议内容再确定是否参与此测试功能": "Please read the agreement carefully before deciding whether to join this test feature",
+  " - {0:0} s": " - {0:0} s",
+  "请先等待阅读倒计时结束，并明确同意协议与今后贡献。保持关闭也可继续使用应用。": "Wait for the reading countdown to finish, then explicitly agree to the agreement and future contributions. You can keep sharing off and continue using the app."
 }

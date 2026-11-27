@@ -12,7 +12,7 @@ Windows 10 / 11 · x64 · Free for noncommercial use
 
 </div>
 
-> **Current version: 1.1.4 (2026-11-24).** [Windows x64 installer](https://github.com/kxdyh/Disklens/releases/download/v1.1.4/DiskLens-Setup-1.1.4-x64.exe) · [Portable ZIP](https://github.com/kxdyh/Disklens/releases/download/v1.1.4/DiskLens-1.1.4-win-x64.zip) · [Website](https://disklens.site/) · [Changelog](CHANGELOG.en.md). The [1.0.0 preview](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) remains available in release history.
+> **Current version: 1.1.5 (2026-11-28).** [Windows x64 installer](https://github.com/kxdyh/Disklens/releases/download/v1.1.5/DiskLens-Setup-1.1.5-x64.exe) · [Portable ZIP](https://github.com/kxdyh/Disklens/releases/download/v1.1.5/DiskLens-1.1.5-win-x64.zip) · [Website](https://disklens.site/) · [Changelog](CHANGELOG.en.md). The [1.0.0 preview](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) remains available in release history.
 
 ![DiskLens cloud experience labels, folder navigation, hover summaries and detailed analysis](assets/demos/cloud-experience-labels.gif)
 
@@ -52,7 +52,7 @@ These landscape recordings show the app in light and dark themes. They have been
 
 ## Download & get started
 
-1. Download the [DiskLens 1.1.4 Windows x64 installer](https://github.com/kxdyh/Disklens/releases/download/v1.1.4/DiskLens-Setup-1.1.4-x64.exe) or [portable ZIP](https://github.com/kxdyh/Disklens/releases/download/v1.1.4/DiskLens-1.1.4-win-x64.zip). Downloads are also available on the [website](https://disklens.site/#download).
+1. Download the [DiskLens 1.1.5 Windows x64 installer](https://github.com/kxdyh/Disklens/releases/download/v1.1.5/DiskLens-Setup-1.1.5-x64.exe) or [portable ZIP](https://github.com/kxdyh/Disklens/releases/download/v1.1.5/DiskLens-1.1.5-win-x64.zip). Downloads are also available on the [website](https://disklens.site/#download).
 2. Close any running DiskLens instance and run the installer. For the ZIP, extract it completely and run `DiskLens.App.exe`; no installation is needed.
 3. Choose a drive or folder to scan, then browse its space usage when the scan finishes.
 4. To use AI assistance, configure your own service endpoint, model, and API key in Settings, then explicitly request an analysis.
@@ -60,6 +60,8 @@ These landscape recordings show the app in light and dark themes. They have been
 If a browser security warning prevents the installer download, download the ZIP, extract it completely, and run the app.
 
 The package includes its runtime and supports Windows 10 / 11 x64. Shared experience is off by default; see [how matching and privacy work](SHARED-EXPERIENCE.en.md).
+
+The agreement page has a five-second reading countdown before you can choose whether to consent. Failed eligible uploads retry in the background at one-minute intervals, up to three times, with status messages only at the lower left.
 
 ## Data & file operations
 

@@ -278,7 +278,7 @@
                 </StackPanel>
                 <Border Grid.Row="1" Background="{DynamicResource CardBackgroundBrush}" CornerRadius="12" Padding="24,8,12,8">
                     <ScrollViewer x:Name="AgreementScroll" VerticalScrollBarVisibility="Visible" HorizontalScrollBarVisibility="Disabled" Padding="0,12,12,12"
-                                  ScrollChanged="Agreement_OnScrollChanged" AutomationProperties.Name="{loc:Text s387}">
+                                  AutomationProperties.Name="{loc:Text s387}">
                         <StackPanel>
                             <TextBlock Text="{loc:Text s386}" Style="{StaticResource SectionHeading}"/>
                             <TextBlock Text="{loc:Bind Source={x:Static shared:SharedConsentSnapshot.CurrentAgreementVersion}, Format=s674}" Style="{StaticResource Caption}" Margin="0,5,0,0"/>
@@ -308,7 +308,8 @@
                     </ScrollViewer>
                 </Border>
                 <StackPanel Grid.Row="2" Margin="2,10,2,0">
-                    <CheckBox x:Name="AcceptAgreement" IsEnabled="False" Checked="Consent_OnChanged" Unchecked="Consent_OnChanged"><TextBlock TextWrapping="Wrap" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type CheckBox}}}"><Run Text="{loc:Text s317}"/><Run Text="{loc:Text s670}" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"/></TextBlock></CheckBox>
+                    <TextBlock x:Name="AgreementCountdownText" Style="{StaticResource Caption}" Margin="0,0,0,8" TextWrapping="Wrap"/>
+                    <CheckBox x:Name="AcceptAgreement" IsEnabled="False" Checked="Consent_OnChanged" Unchecked="Consent_OnChanged"><TextBlock Text="{loc:Text s317}" TextWrapping="Wrap" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type CheckBox}}}"/></CheckBox>
                     <CheckBox x:Name="AcceptFuture" Checked="Consent_OnChanged" Unchecked="Consent_OnChanged"><TextBlock Text="{loc:Text s316}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type CheckBox}}}"/></CheckBox>
                     <CheckBox x:Name="IncludeHistory" Checked="Consent_OnChanged" Unchecked="Consent_OnChanged"><TextBlock Text="{loc:Text s208}" Style="{StaticResource Caption}" Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType={x:Type CheckBox}}}"/></CheckBox>
                 </StackPanel>

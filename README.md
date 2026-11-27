@@ -12,7 +12,7 @@ Windows 10 / 11 · x64 · 非商业用途免费
 
 </div>
 
-> **当前版本：1.1.4（2026-11-24）。** [Windows x64 安装包](https://github.com/kxdyh/Disklens/releases/download/v1.1.4/DiskLens-Setup-1.1.4-x64.exe) · [免安装 ZIP](https://github.com/kxdyh/Disklens/releases/download/v1.1.4/DiskLens-1.1.4-win-x64.zip) · [官网](https://disklens.site/) · [更新日志](CHANGELOG.md)。[1.0.0 预览版](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) 仍可从历史发行下载。
+> **当前版本：1.1.5（2026-11-28）。** [Windows x64 安装包](https://github.com/kxdyh/Disklens/releases/download/v1.1.5/DiskLens-Setup-1.1.5-x64.exe) · [免安装 ZIP](https://github.com/kxdyh/Disklens/releases/download/v1.1.5/DiskLens-1.1.5-win-x64.zip) · [官网](https://disklens.site/) · [更新日志](CHANGELOG.md)。[1.0.0 预览版](https://github.com/kxdyh/Disklens/releases/tag/v2026.11.06-preview) 仍可从历史发行下载。
 
 ![DiskLens 云端经验用途标签、逐层浏览与悬浮详情演示](assets/demos/cloud-experience-labels.gif)
 
@@ -52,7 +52,7 @@ DiskLens 将文件与文件夹的磁盘占用绘制为矩形方块。先找到�
 
 ## 下载与开始使用
 
-1. 下载 [DiskLens 1.1.4 Windows x64 安装包](https://github.com/kxdyh/Disklens/releases/download/v1.1.4/DiskLens-Setup-1.1.4-x64.exe)或[免安装 ZIP](https://github.com/kxdyh/Disklens/releases/download/v1.1.4/DiskLens-1.1.4-win-x64.zip)，也可从 [官网](https://disklens.site/#download) 下载。
+1. 下载 [DiskLens 1.1.5 Windows x64 安装包](https://github.com/kxdyh/Disklens/releases/download/v1.1.5/DiskLens-Setup-1.1.5-x64.exe)或[免安装 ZIP](https://github.com/kxdyh/Disklens/releases/download/v1.1.5/DiskLens-1.1.5-win-x64.zip)，也可从 [官网](https://disklens.site/#download) 下载。
 2. 关闭正在运行的 DiskLens，再运行安装包。使用 ZIP 时，请完整解压后运行其中的 `DiskLens.App.exe`，无需安装。
 3. 选择要扫描的磁盘或文件夹，等待扫描完成后逐层浏览占用情况。
 4. 如需 AI 辅助分析，在设置中配置自己的服务地址、模型和 API Key，再主动发起分析。
@@ -60,6 +60,8 @@ DiskLens 将文件与文件夹的磁盘占用绘制为矩形方块。先找到�
 如果安装包因浏览器安全提示无法下载，可下载 ZIP 压缩包，完整解压后运行。
 
 发布包适用于 Windows 10 / 11 x64，已包含运行环境。共享经验默认关闭；[共享经验说明](SHARED-EXPERIENCE.md) 介绍了匹配范围、隐私和开启方式。
+
+启用共享经验时，协议页提供 5 秒阅读倒计时，结束后由你选择是否同意。合格经验上传失败后，每隔 1 分钟在后台自动重试，最多 3 次；状态仅显示在左下角消息处。
 
 ## 数据与操作边界
 

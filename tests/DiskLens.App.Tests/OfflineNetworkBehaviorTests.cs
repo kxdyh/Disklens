@@ -1,7 +1,9 @@
 using System.Net;
 using System.Net.Http;
 using System.Net.Sockets;
+using DiskLens.App.Services.SharedKnowledge;
 using DiskLens.Core.Networking;
+using DiskLens.Core.SharedKnowledge;
 
 namespace DiskLens.App.Tests;
 
@@ -95,21 +97,35 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
     });
 
     [Fact]
-    public void Network_loss_only_during_upload_keeps_AI_results_but_closes_sharing_and_clears_the_queue() => OnSta(() =>
+    public void Network_loss_only_during_upload_keeps_AI_results_consent_and_queue_for_background_retry() => OnSta(() =>
     {
         using var fixture = new Fixture(configured: true, networkAvailability: new OfflineNetwork(true));
+        var now = DateTimeOffset.UtcNow;
+        fixture.Client.PathIndex = new SharedPathIndex(1, [], true, now, now.AddMinutes(4));
         fixture.Enable();
         fixture.ApplyScan();
+        Complete(fixture.Vm.RefreshSharedExperienceAfterScanAsync());
         fixture.Client.ContributionFailure = new HttpRequestException("synthetic upload network loss",
             new SocketException((int)SocketError.NetworkDown));
 
         RunNetworkAnalysis(fixture);
+        Complete(fixture.Vm.RefreshSharedOutboxStatusAsync());
 
         Assert.True(fixture.Client.ContributionCalls > 0);
-        Assert.False(fixture.Runtime.Settings.LoadAsync().GetAwaiter().GetResult().Enabled);
-        Assert.Equal(0, fixture.Runtime.Outbox.PendingCountAsync().GetAwaiter().GetResult());
+        Assert.True(fixture.Runtime.Settings.LoadAsync().GetAwaiter().GetResult().Enabled);
+        var upload = fixture.Runtime.Outbox.GetUploadStatusAsync().GetAwaiter().GetResult();
+        Assert.Equal(SharedUploadStage.Failed, upload.Stage);
+        Assert.True(upload.Pending > 0);
+        Assert.Equal(0, upload.AutomaticRetriesUsed);
+        Assert.NotNull(upload.NextRetryAt);
+        Assert.False(upload.AutomaticRetriesExhausted);
         Assert.Contains(fixture.Vm.ScanRoot!.DescendantsAndSelf(), node => node.Analysis is { } analysis && !analysis.LooksLikeFallback());
-        Assert.Equal(NetworkFailureClassifier.OfflineMessage, fixture.Vm.StatusText);
+        Assert.Contains("等待后台重试", FooterDetail(fixture.Vm));
+        Assert.NotEqual(NetworkFailureClassifier.OfflineMessage, fixture.Vm.StatusText);
+        Assert.False(fixture.Vm.IsOfflineAlertVisible);
+        Assert.False(fixture.Vm.IsFooterCloudActivityVisible);
+        Assert.False(fixture.Vm.IsAnalyzing);
+        Assert.True(fixture.Vm.AnalyzeCommand.CanExecute(null));
     });
 
     private static void RunNetworkAnalysis(Fixture fixture)

@@ -68,8 +68,11 @@ public sealed partial class SharedKnowledgeDialogConsentBehaviorTests
         Assert.True(dialog.IsVisible);
         Assert.False(fixture.Store.GetSnapshotAsync().GetAwaiter().GetResult().CanShare);
         Assert.False(ReloadConsent(fixture).CanShare);
-        Assert.Contains("尚未确认开启，请重试", ((TextBlock)dialog.FindName("FeedbackText")).Text);
+        Assert.Contains("云端连接已中断，请稍后重试", ((TextBlock)dialog.FindName("FeedbackText")).Text);
         Assert.Equal(0, fixture.HistoryCalls);
+        Assert.True(Check(dialog, "AcceptAgreement").IsEnabled);
+        Assert.True(Check(dialog, "AcceptAgreement").IsChecked == true);
+        Assert.DoesNotContain(" - 5 s", CountdownText(dialog));
 
         fixture.Client.BeforeOperation = null;
         Invoke(dialog, "Save_OnClick");

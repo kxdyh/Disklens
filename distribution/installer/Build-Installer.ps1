@@ -1,8 +1,8 @@
-﻿[CmdletBinding()]
+[CmdletBinding()]
 param(
     [Parameter(Mandatory)][string]$PublishDirectory,
     [Parameter(Mandatory)][string]$OutputDirectory,
-    [string]$Version = '1.1.4',
+    [string]$Version = '1.1.5',
     [string]$IconFile = (Join-Path $PSScriptRoot '..\..\src\DiskLens.App\Resources\Brand\DiskLens.ico'),
     [string]$CompilerPath = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
 )

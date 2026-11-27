@@ -2,7 +2,7 @@
 
 安装器沿用固定 AppId，升级时默认复用原安装目录和安装范围，合并原卸载记录。
 
-1.1.4 的“移入回收站”使用 Windows 系统流程，由系统显示进度、占用、权限和超限时的永久删除确认。不同项目仍可并行处理；应用只在系统确认完成后更新视图。
+1.1.5 的“移入回收站”使用 Windows 系统流程，由系统显示进度、占用、权限和超限时的永久删除确认。不同项目仍可并行处理；应用只在系统确认完成后更新视图。
 
 安装成功后自动清理两类内容：
 
@@ -18,7 +18,7 @@
 先生成包含运行环境的 Windows x64 发布目录，再运行：
 
 ```powershell
-.\Build-Installer.ps1 -PublishDirectory <发布目录> -OutputDirectory <输出目录> -Version 1.1.4 -IconFile <DiskLens.ico>
+.\Build-Installer.ps1 -PublishDirectory <发布目录> -OutputDirectory <输出目录> -Version 1.1.5 -IconFile <DiskLens.ico>
 ```
 
 发布目录须包含 `DiskLens.App.exe`、`LICENSE`、`使用说明.md`、`UserGuide.en.md`、`NOTICE.md`、`THIRD-PARTY-NOTICES.txt`。构建脚本会核对应用版本、生成组件清单、编译安装包，并生成 SHA-256 校验文件。脚本仅生成安装包；官网和 GitHub 发行页另提供免安装 ZIP。不发布 PDB、私有控制台或管理凭据。

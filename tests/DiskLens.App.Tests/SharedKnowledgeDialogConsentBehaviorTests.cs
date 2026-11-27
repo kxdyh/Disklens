@@ -151,7 +151,7 @@ public sealed partial class SharedKnowledgeDialogConsentBehaviorTests
     });
 
     [Fact]
-    public void Opening_expanding_layout_and_partial_scroll_do_not_unlock_the_agreement() => OnSta(() =>
+    public void Opening_expanding_layout_and_scrolling_do_not_bypass_the_agreement_countdown() => OnSta(() =>
     {
         using var fixture = new Fixture();
         var dialog = fixture.Open();
@@ -176,6 +176,9 @@ public sealed partial class SharedKnowledgeDialogConsentBehaviorTests
         Assert.Equal(0, fixture.Client.UpdateCalls);
 
         scroll.ScrollToEnd();
+        WaitUntil(() => scroll.VerticalOffset >= scroll.ScrollableHeight - 1);
+        Assert.False(Check(dialog, "AcceptAgreement").IsEnabled);
+        AdvanceAgreementTime(dialog, TimeSpan.FromSeconds(5));
         WaitUntil(() => Check(dialog, "AcceptAgreement").IsEnabled);
         Assert.False(Check(dialog, "AcceptAgreement").IsChecked == true);
         Check(dialog, "AcceptFuture").IsChecked = true;
@@ -263,8 +266,10 @@ public sealed partial class SharedKnowledgeDialogConsentBehaviorTests
                 HistoryCalls++;
                 return HistoryAction?.Invoke() ?? Task.FromResult(new SharedContributionReceipt(0, 0, 1));
             }, openManagement: openManagement);
-            // Real scrolling and IsVisible are part of the consent gate. Opening
-            // a hidden/unmeasured control or invoking Expanded cannot replace it.
+            typeof(SharedKnowledgeWindow).GetField("_agreementClock", BindingFlags.NonPublic | BindingFlags.Instance)!
+                .SetValue(dialog, new AgreementTestClock());
+            // The visible third page owns the reading countdown. Keep tests
+            // deterministic while exercising real WPF state and explicit consent.
             dialog.ShowActivated = false;
             dialog.ShowInTaskbar = false;
             dialog.WindowStartupLocation = WindowStartupLocation.Manual;
@@ -302,13 +307,13 @@ public sealed partial class SharedKnowledgeDialogConsentBehaviorTests
     private static ScrollViewer AgreementScroll(SharedKnowledgeWindow dialog) => (ScrollViewer)dialog.FindName("AgreementScroll");
     private static void ReadAgreement(SharedKnowledgeWindow dialog)
     {
+        var selected = Check(dialog, "AcceptAgreement").IsChecked;
         ShowAgreementPage(dialog);
         var scroll = AgreementScroll(dialog);
         WaitUntil(() => scroll.ScrollableHeight > 0 && scroll.ViewportHeight > 0);
-        scroll.ScrollToEnd();
+        AdvanceAgreementTime(dialog, TimeSpan.FromSeconds(5));
         WaitUntil(() => Check(dialog, "AcceptAgreement").IsEnabled);
-        Assert.True(scroll.VerticalOffset >= scroll.ScrollableHeight - 1);
-        Assert.False(Check(dialog, "AcceptAgreement").IsChecked == true, "Reading unlocks an explicit choice; it must never tick consent automatically.");
+        Assert.Equal(selected, Check(dialog, "AcceptAgreement").IsChecked);
     }
     private static void Pump() => Dispatcher.CurrentDispatcher.Invoke(() => { }, DispatcherPriority.Background);
     private static void WaitUntil(Func<bool> condition)
