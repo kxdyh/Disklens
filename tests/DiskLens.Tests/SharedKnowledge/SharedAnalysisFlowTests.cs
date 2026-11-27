@@ -69,6 +69,21 @@ public sealed class SharedAnalysisFlowTests
         Assert.DoesNotContain("自己的", report.SharedKnowledgeWarning);
     }
 
+    [Fact]
+    public async Task Queued_upload_network_failure_does_not_mark_successful_analysis_as_globally_offline()
+    {
+        var provider = new ShareableProvider();
+        var shared = new Pipeline { UploadOffline = true };
+        var report = await Service(provider, shared).AnalyzeWithReportAsync(Folder(RootPath, File("offline-upload.zip")),
+            new(RootPath, AnalysisThresholdBytes: 1), ProviderOptions, provenance: new("custom", "other", true));
+
+        Assert.False(report.NetworkUnavailable);
+        Assert.False(Assert.Single(report.Results).LooksLikeFallback());
+        Assert.Single(shared.Uploaded);
+        Assert.Equal(1, provider.Calls);
+        Assert.Contains("已保存到本机待上传队列", report.SharedKnowledgeWarning);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -151,6 +166,7 @@ public sealed class SharedAnalysisFlowTests
         public string? HitPath;
         public string[] Missing = [];
         public bool UploadFails;
+        public bool UploadOffline;
         public Exception? ContributionException;
         public int ResolveCalls;
         public List<AiAnalysisResult> Uploaded { get; } = [];
@@ -172,6 +188,8 @@ public sealed class SharedAnalysisFlowTests
         {
             if (ContributionException is not null) throw ContributionException;
             Uploaded.AddRange(results);
+            if (UploadOffline) return Task.FromResult(new SharedContributionReceipt(0, 0, 1)
+                { Failed = results.Count, Pending = results.Count, NetworkUnavailable = true });
             return Task.FromResult(new SharedContributionReceipt(UploadFails ? 0 : results.Count, UploadFails ? results.Count : 0, 1)
             { Failed = UploadFails ? results.Count : 0 });
         }

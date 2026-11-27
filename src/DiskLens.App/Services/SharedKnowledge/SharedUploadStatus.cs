@@ -4,7 +4,8 @@ public enum SharedUploadStage { Idle, Pending, Uploading, Completed, Failed, Pau
 
 /// <summary>A service-wide display snapshot. Counts describe validated server receipts, never sent requests.</summary>
 public sealed record SharedUploadStatus(SharedUploadStage Stage, int Pending, int Accepted = 0,
-    int Skipped = 0, int Total = 0, string? Error = null)
+    int Skipped = 0, int Total = 0, string? Error = null, int AutomaticRetriesUsed = 0,
+    DateTimeOffset? NextRetryAt = null, bool AutomaticRetriesExhausted = false)
 {
     public int Confirmed => Accepted + Skipped;
 }

@@ -302,6 +302,39 @@ public sealed partial class SharedContributionOutboxBehaviorTests : IDisposable
     }
 
     [Fact]
+    public async Task Upload_retries_every_minute_at_most_three_times_and_persists_the_budget()
+    {
+        _client.Response = (_, _, _) => throw new HttpRequestException("synthetic transient failure");
+        using var outbox = Create();
+        await outbox.EnqueueAsync(_consent.Value, [Queued("bounded-retry-analysis")]);
+
+        await outbox.FlushAsync();
+        var status = await outbox.GetUploadStatusAsync();
+        Assert.Equal(1, status.Pending);
+        Assert.Equal(0, status.AutomaticRetriesUsed);
+        Assert.Equal(_clock.GetUtcNow().AddMinutes(1), status.NextRetryAt);
+
+        // No immediate retry, even when another background flush is requested.
+        await outbox.FlushAsync();
+        Assert.Single(_client.Batches);
+
+        for (var retry = 1; retry <= 3; retry++)
+        {
+            _clock.Advance(TimeSpan.FromMinutes(1));
+            await outbox.FlushAsync();
+            status = await outbox.GetUploadStatusAsync();
+            Assert.Equal(retry, status.AutomaticRetriesUsed);
+            Assert.Equal(1, status.Pending);
+            Assert.Equal(retry == 3, status.AutomaticRetriesExhausted);
+            Assert.Equal(retry == 3 ? null : _clock.GetUtcNow().AddMinutes(1), status.NextRetryAt);
+        }
+
+        await outbox.FlushAsync();
+        Assert.Equal(4, _client.Batches.Count); // initial send + exactly three retries
+        Assert.Equal(1, await outbox.PendingCountAsync());
+    }
+
+    [Fact]
     public async Task Queue_accepts_more_than_512_anonymous_buckets_and_flushes_in_batches_of_ten()
     {
         using var outbox = Create();
@@ -367,17 +400,17 @@ public sealed partial class SharedContributionOutboxBehaviorTests : IDisposable
     }
 
     [Fact]
-    public async Task Rate_limited_upload_waits_at_least_an_hour_before_retrying()
+    public async Task Rate_limited_upload_uses_the_same_one_minute_bounded_retry_schedule()
     {
         using var outbox = Create();
         _client.Response = (_, _, _) => throw new HttpRequestException("synthetic rate limit", null, HttpStatusCode.TooManyRequests);
         await outbox.EnqueueAsync(_consent.Value, [Queued("rate-limited-analysis")]);
         await outbox.FlushAsync();
-        _clock.Advance(TimeSpan.FromMinutes(59));
+        _clock.Advance(TimeSpan.FromSeconds(59));
         await outbox.FlushAsync();
         Assert.Single(_client.Batches);
 
-        _clock.Advance(TimeSpan.FromMinutes(2));
+        _clock.Advance(TimeSpan.FromSeconds(1));
         _client.Response = null;
         await outbox.FlushAsync();
 

@@ -23,7 +23,6 @@ public sealed class SharedKnowledgeRuntime : IDisposable
     public AnalysisMemoryStore Memory { get; }
     public Uri Endpoint { get; }
     public INetworkAvailability NetworkAvailability { get; }
-    public event EventHandler? NetworkUnavailable;
     public event EventHandler? ConnectionChanged;
     public bool IsLocalTest => Endpoint.IsLoopback;
     private readonly SharedExperienceClient? _ownedClient;
@@ -36,6 +35,7 @@ public sealed class SharedKnowledgeRuntime : IDisposable
     private readonly SemaphoreSlim _uploadWake = new(0, 1);
     private readonly Timer _networkRecoveryTimer;
     private bool _disposed;
+    private int _uploadWorkerFlushing;
 
     public SharedKnowledgeRuntime(AnalysisMemoryStore memory, SharedPreferenceStore? store = null,
         ISharedExperienceClient? client = null, ISharedFingerprintExtractor? extractor = null,
@@ -67,6 +67,7 @@ public sealed class SharedKnowledgeRuntime : IDisposable
         Pipeline = new SharedKnowledgePipeline(Store, Extractor, Client, outbox: Outbox,
             networkAvailability: NetworkAvailability, requiresNetwork: !Endpoint.IsLoopback);
         Settings.Changed += OnSharedSettingsChanged;
+        Outbox.Changed += OnUploadQueueChanged;
         _networkRecoveryTimer = new Timer(OnNetworkRecovery, null, Timeout.Infinite, Timeout.Infinite);
         NetworkChange.NetworkAddressChanged += OnNetworkAddressChanged;
         NetworkChange.NetworkAvailabilityChanged += OnNetworkAvailabilityChanged;
@@ -434,25 +435,35 @@ public sealed class SharedKnowledgeRuntime : IDisposable
     {
         while (!_uploadLifetime.IsCancellationRequested)
         {
+            var delay = Timeout.InfiniteTimeSpan;
             try
             {
+                Interlocked.Exchange(ref _uploadWorkerFlushing, 1);
                 await FlushPendingUploadsAsync(_uploadLifetime.Token).ConfigureAwait(false);
+                Interlocked.Exchange(ref _uploadWorkerFlushing, 0);
+                delay = await Outbox.GetNextUploadDelayAsync(_uploadLifetime.Token).ConfigureAwait(false);
             }
             catch (OperationCanceledException) when (_uploadLifetime.IsCancellationRequested) { break; }
             catch (ObjectDisposedException) when (_uploadLifetime.IsCancellationRequested) { break; }
             catch (Exception ex) when (ex is IOException or InvalidDataException or UnauthorizedAccessException or System.Net.Http.HttpRequestException) { }
-            try { await _uploadWake.WaitAsync(TimeSpan.FromSeconds(30), _uploadLifetime.Token).ConfigureAwait(false); }
+            finally { Interlocked.Exchange(ref _uploadWorkerFlushing, 0); }
+            try { await _uploadWake.WaitAsync(delay, _uploadLifetime.Token).ConfigureAwait(false); }
             catch (OperationCanceledException) { break; }
         }
     }
 
     private async Task FlushPendingUploadsAsync(CancellationToken cancellationToken)
     {
-        var receipt = await Outbox.FlushAsync(cancellationToken).ConfigureAwait(false);
-        if (!receipt.NetworkUnavailable) return;
-        // A transient link failure is not a withdrawal of the user's consent.
-        // The encrypted queue and its original analysis IDs remain recoverable.
-        if (!_disposed) NetworkUnavailable?.Invoke(this, EventArgs.Empty);
+        // Upload-only failures belong to the footer. They must not open the global
+        // offline flow, affect matching, or change the user's sharing consent.
+        await Outbox.FlushAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private void OnUploadQueueChanged(object? sender, EventArgs e)
+    {
+        if (_disposed || Volatile.Read(ref _uploadWorkerFlushing) != 0) return;
+        try { if (_uploadWake.CurrentCount == 0) _uploadWake.Release(); }
+        catch (SemaphoreFullException) { }
     }
 
     private void OnNetworkAddressChanged(object? sender, EventArgs e) => ScheduleNetworkRecovery();
@@ -490,6 +501,7 @@ public sealed class SharedKnowledgeRuntime : IDisposable
         NetworkChange.NetworkAvailabilityChanged -= OnNetworkAvailabilityChanged;
         _networkRecoveryTimer.Dispose();
         Settings.Changed -= OnSharedSettingsChanged;
+        Outbox.Changed -= OnUploadQueueChanged;
         Settings.BeforeConsentChangeAsync = null;
         _uploadLifetime.Cancel();
         Outbox.Dispose();

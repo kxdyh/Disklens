@@ -11,9 +11,7 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
     public void Internationalization_lookup_summary_and_partial_failure_follow_the_current_language() => OnSta(() =>
     {
         L.SetLanguage("zh");
-        using var fixture = new Fixture(configured: false);
-        fixture.Enable();
-        fixture.ApplyScan();
+        using var fixture = CreateUploadFixtureWithSettledLookup(configured: false);
         var snapshot = fixture.Vm.ScanRoot!;
         var path = snapshot.Children[0].Path;
         var consent = fixture.Store.GetSnapshotAsync().GetAwaiter().GetResult();
@@ -71,25 +69,24 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
     public void Internationalization_pending_upload_notice_changes_language_without_changing_the_queue() => OnSta(() =>
     {
         L.SetLanguage("zh");
-        using var fixture = new Fixture(configured: true);
-        fixture.Enable();
-        fixture.ApplyScan();
+        using var fixture = CreateUploadFixtureWithSettledLookup();
         fixture.Client.FailContributions = true;
         var consent = fixture.Store.GetSnapshotAsync().GetAwaiter().GetResult();
         Complete(fixture.Runtime.Outbox.EnqueueAsync(consent, [QueuedForUi("bilingual-pending-notice")]));
         Complete(fixture.Runtime.Outbox.FlushAsync());
         Complete(fixture.Vm.RefreshSharedOutboxStatusAsync());
-        var chinese = fixture.Vm.SharedExperienceSummaryText;
+        var chinese = FooterDetail(fixture.Vm);
         try
         {
             L.SetLanguage("en");
             Pump();
-            Assert.Contains("1 items awaiting upload.", fixture.Vm.SharedExperienceSummaryText);
-            Assert.DoesNotMatch("[\\u4e00-\\u9fff]", fixture.Vm.SharedExperienceSummaryText);
+            Assert.Contains("background retry (1/3, one minute apart)", FooterDetail(fixture.Vm));
+            Assert.DoesNotMatch("[\\u4e00-\\u9fff]", FooterDetail(fixture.Vm));
+            Assert.DoesNotContain("background retry", fixture.Vm.SharedExperienceSummaryText);
             Assert.Equal(1, fixture.Runtime.Outbox.PendingCountAsync().GetAwaiter().GetResult());
             L.SetLanguage("zh");
             Pump();
-            Assert.Equal(chinese, fixture.Vm.SharedExperienceSummaryText);
+            Assert.Equal(chinese, FooterDetail(fixture.Vm));
         }
         finally { L.SetLanguage("zh"); }
     });

@@ -777,12 +777,7 @@ public sealed class AiAnalysisService
                         tracker.Report(AiAnalysisStage.Uploading, "本轮已完成的分析已保存，正在上传云端经验。");
                         var receipt = await _sharedKnowledge.ContributeAsync(contributionCandidates, contributionResults, provenance, false, cancellationToken)
                             .WaitAsync(cancellationToken).ConfigureAwait(false);
-                        if (receipt.NetworkUnavailable)
-                        {
-                            sharedState.NetworkUnavailable = true;
-                            sharedState.AddWarning(NetworkFailureClassifier.OfflineMessage);
-                        }
-                        else if (receipt.Pending > 0)
+                        if (receipt.Pending > 0)
                             sharedState.AddWarning($"上传至云端经验库尚未完成：{receipt.Pending} 项已保存到本机待上传队列，将在网络恢复后自动重试。");
                         else if (receipt.Failed > 0)
                             sharedState.AddWarning($"上传至云端经验库失败：{receipt.Failed} 项未取得成功回执。已保留本地待贡献标记，下次分析时会自动重试。");
@@ -807,14 +802,9 @@ public sealed class AiAnalysisService
                         }
                     }
                     catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { throw; }
-                    catch (Exception ex)
+                    catch (Exception)
                     {
-                        if (NetworkFailureClassifier.IsOffline(ex, NetworkAvailability))
-                        {
-                            sharedState.NetworkUnavailable = true;
-                            sharedState.AddWarning(NetworkFailureClassifier.OfflineMessage);
-                        }
-                        else sharedState.AddWarning("上传至云端经验库失败，部分内容未取得成功回执。已保留本地待贡献标记，下次分析时会自动重试。");
+                        sharedState.AddWarning("上传至云端经验库失败，部分内容未取得成功回执。已保留本地待贡献标记，下次分析时会自动重试。");
                     }
                 }
             }

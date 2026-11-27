@@ -13,7 +13,7 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
     [Theory]
     [InlineData(0, true)]
     [InlineData(503, false)]
-    public void Background_upload_cycle_only_closes_sharing_and_notifies_the_UI_for_confirmed_network_loss(
+    public void Background_upload_failure_preserves_sharing_and_only_notifies_the_footer(
         int status, bool offline) => OnSta(() =>
     {
         using var fixture = new Fixture(configured: true, networkAvailability: new OfflineNetwork(true));
@@ -27,7 +27,8 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
         {
             if (args.PropertyName is nameof(MainWindowViewModel.StatusText)
                 or nameof(MainWindowViewModel.IsOfflineAlertVisible)
-                or nameof(MainWindowViewModel.ShowSharedExperienceAnalysis))
+                or nameof(MainWindowViewModel.ShowSharedExperienceAnalysis)
+                or nameof(MainWindowViewModel.FooterStatusDetailText))
                 notificationThreads.Add(Environment.CurrentManagedThreadId);
         };
         fixture.Client.ContributionFailure = offline
@@ -37,35 +38,27 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
         var consent = fixture.Store.GetSnapshotAsync().GetAwaiter().GetResult();
         Complete(fixture.Runtime.Outbox.EnqueueAsync(consent, [QueuedForUi("background-offline-" + status)]));
 
-        // Exercise the same cycle called by the production worker without a 30-second timer wait.
+        // Exercise the production cycle without waiting one minute.
         var cycle = typeof(SharedKnowledgeRuntime).GetMethod("FlushPendingUploadsAsync", BindingFlags.Instance | BindingFlags.NonPublic)!;
         Complete(Task.Run(async () =>
             await (Task)cycle.Invoke(fixture.Runtime, [CancellationToken.None])!));
-        WaitUntil(() => fixture.Client.ContributionCalls > 0
-            && (!offline || fixture.Vm.IsOfflineAlertVisible && !fixture.Vm.ShowSharedExperienceAnalysis));
+        WaitUntil(() => fixture.Client.ContributionCalls > 0);
         Complete(fixture.Vm.RefreshSharedOutboxStatusAsync());
 
-        Assert.Equal(!offline, fixture.Runtime.Settings.LoadAsync().GetAwaiter().GetResult().Enabled);
-        Assert.Equal(offline ? 0 : 1, fixture.Runtime.Outbox.PendingCountAsync().GetAwaiter().GetResult());
-        Assert.Equal(offline, fixture.Vm.IsOfflineAlertVisible);
-        Assert.Equal(!offline, fixture.Vm.ShowSharedExperienceAnalysis);
+        Assert.True(fixture.Runtime.Settings.LoadAsync().GetAwaiter().GetResult().Enabled);
+        Assert.Equal(1, fixture.Runtime.Outbox.PendingCountAsync().GetAwaiter().GetResult());
+        Assert.False(fixture.Vm.IsOfflineAlertVisible);
+        Assert.True(fixture.Vm.ShowSharedExperienceAnalysis);
         Assert.Same(snapshot, fixture.Vm.ScanRoot);
         Assert.Same(originalAnalysis, fixture.Vm.ScanRoot!.Children[0].Analysis);
         Assert.Empty(fixture.Provider.RequestedPaths);
         Assert.NotEmpty(notificationThreads);
         Assert.All(notificationThreads, thread => Assert.Equal(ownerThread, thread));
-        if (offline)
-        {
-            Assert.Null(fixture.Runtime.Outbox.LastError);
-            Assert.Equal(NetworkFailureClassifier.OfflineMessage, fixture.Vm.StatusText);
-            Assert.Equal(NetworkFailureClassifier.OfflineMessage, fixture.Vm.SharedExperienceSummaryText);
-            Assert.DoesNotContain("待上传", fixture.Vm.StatusText);
-        }
-        else
-        {
-            Assert.Contains("上传至云端经验库失败", fixture.Vm.StatusText);
-            Assert.Contains("待上传 1 项", fixture.Vm.SharedExperienceSummaryText);
-        }
+        Assert.Contains("第 1/3 次", fixture.Vm.FooterStatusDetailText);
+        Assert.DoesNotContain("后台重试", fixture.Vm.SharedExperienceSummaryText);
+        Assert.NotEqual(NetworkFailureClassifier.OfflineMessage, fixture.Vm.StatusText);
+        Assert.False(fixture.Vm.IsAnalyzing);
+        Assert.False(fixture.Vm.IsRefreshing);
     });
 
     [Fact]

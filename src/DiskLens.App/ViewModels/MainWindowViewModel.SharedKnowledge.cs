@@ -24,12 +24,9 @@ public sealed partial class MainWindowViewModel
     private bool _sharedMissingIsPathPurpose;
     private string? _sharedMissingReuseScopePath;
     private readonly HashSet<string> _sharedMissingPaths = new(StringComparer.Ordinal);
-    private string _lastSharedOutboxNotice = string.Empty;
     private Func<string>? _sharedSummaryRenderer;
-    private Func<string>? _sharedOutboxNoticeRenderer;
     private string _sharedSummaryBaseText = string.Empty;
     private string _sharedSummaryText = string.Empty;
-    private bool _includeSharedOutboxNotice;
     private long _sharedOutboxRefreshRevision;
     private SynchronizationContext? _sharedOutboxUiContext;
     public SharedKnowledgeRuntime? SharedRuntime
@@ -45,7 +42,6 @@ public sealed partial class MainWindowViewModel
             {
                 _sharedRuntime.Settings.Changed -= SharedSettings_OnChanged;
                 _sharedRuntime.Outbox.Changed -= SharedOutbox_OnChanged;
-                _sharedRuntime.NetworkUnavailable -= SharedRuntime_OnNetworkUnavailable;
                 _sharedRuntime.ConnectionChanged -= SharedRuntime_OnConnectionChanged;
                 PropertyChanged -= SharedOutbox_OnViewModelChanged;
             }
@@ -56,14 +52,10 @@ public sealed partial class MainWindowViewModel
             {
                 _sharedRuntime.Settings.Changed += SharedSettings_OnChanged;
                 _sharedRuntime.Outbox.Changed += SharedOutbox_OnChanged;
-                _sharedRuntime.NetworkUnavailable += SharedRuntime_OnNetworkUnavailable;
                 _sharedRuntime.ConnectionChanged += SharedRuntime_OnConnectionChanged;
                 PropertyChanged += SharedOutbox_OnViewModelChanged;
             }
             _sharedOutboxUiContext = SynchronizationContext.Current;
-            _lastSharedOutboxNotice = string.Empty;
-            _sharedOutboxNoticeRenderer = null;
-            _includeSharedOutboxNotice = false;
             _sharedUploadStatus = new(SharedUploadStage.Idle, 0);
             NotifySharedUploadFooter();
             ClearSharedMissingState();
@@ -81,9 +73,8 @@ public sealed partial class MainWindowViewModel
         private set
         {
             _sharedSummaryRenderer = null;
-            _sharedSummaryBaseText = value;
-            _sharedSummaryText = value;
-            _includeSharedOutboxNotice = false;
+            _sharedSummaryBaseText = RemoveSharedOutboxNotice(value);
+            _sharedSummaryText = _sharedSummaryBaseText;
         }
     }
     public bool HasSharedExperienceSummary => !string.IsNullOrWhiteSpace(SharedExperienceSummaryText);
@@ -91,8 +82,7 @@ public sealed partial class MainWindowViewModel
     private void SetSharedSummary(Func<string> render)
     {
         _sharedSummaryRenderer = render;
-        _includeSharedOutboxNotice = false;
-        _sharedSummaryText = render();
+        _sharedSummaryText = RemoveSharedOutboxNotice(render());
         NotifySharedLookupSummary();
     }
 
@@ -117,18 +107,9 @@ public sealed partial class MainWindowViewModel
     private void RefreshSharedSummaryLanguage()
     {
         var previousSummary = _sharedSummaryText;
-        var previousNotice = _lastSharedOutboxNotice;
-        var summary = _sharedSummaryRenderer?.Invoke() ?? L.T(_sharedSummaryBaseText);
-        if (_includeSharedOutboxNotice)
-        {
-            summary = RemoveSharedOutboxNotice(summary);
-            _lastSharedOutboxNotice = _sharedOutboxNoticeRenderer?.Invoke() ?? string.Empty;
-            if (_lastSharedOutboxNotice.Length > 0)
-                summary = summary.Length == 0 ? _lastSharedOutboxNotice : summary + "\n" + _lastSharedOutboxNotice;
-        }
+        var summary = RemoveSharedOutboxNotice(_sharedSummaryRenderer?.Invoke() ?? L.T(_sharedSummaryBaseText));
         _sharedSummaryText = summary;
         if (StatusText == previousSummary && previousSummary.Length > 0) StatusText = summary;
-        else if (StatusText == previousNotice && previousNotice.Length > 0) StatusText = _lastSharedOutboxNotice;
         NotifySharedLookupSummary();
     }
 
@@ -224,7 +205,6 @@ public sealed partial class MainWindowViewModel
         {
             if (_isDisposed || !ReferenceEquals(runtime, SharedRuntime)) return;
             Interlocked.Increment(ref _sharedOutboxRefreshRevision);
-            _lastSharedOutboxNotice = string.Empty;
             ClearSharedMissingState();
             SetSharedSummary(() => L.T(NetworkFailureClassifier.OfflineMessage));
             NotifySharedLookupSummary();
@@ -352,13 +332,6 @@ public sealed partial class MainWindowViewModel
         else StartLookup();
     }
 
-    private async void SharedRuntime_OnNetworkUnavailable(object? sender, EventArgs e)
-    {
-        if (sender is not SharedKnowledgeRuntime runtime || !ReferenceEquals(runtime, SharedRuntime) || _isDisposed) return;
-        await RefreshSharedConsentAsync();
-        await ApplyOfflineStatusAsync(runtime);
-    }
-
     private async void SharedOutbox_OnChanged(object? sender, EventArgs e)
         => await RefreshSharedOutboxStatusAsync();
 
@@ -381,34 +354,17 @@ public sealed partial class MainWindowViewModel
         try
         {
             var uploadStatus = await runtime.Outbox.GetUploadStatusAsync().ConfigureAwait(false);
-            var consent = await runtime.Store.GetSnapshotAsync().ConfigureAwait(false);
             void Apply()
             {
                 if (_isDisposed || revision != Interlocked.Read(ref _sharedOutboxRefreshRevision)
                     || !ReferenceEquals(runtime, SharedRuntime)) return;
                 _sharedUploadStatus = uploadStatus;
                 NotifySharedUploadFooter();
-                // Queue state is global to the runtime, not to a scan snapshot.
-                // Keep the independent pending reminder live in every tab while
-                // preserving scan/analysis progress and offline details below.
-                if (!CanPresentSharedUpload || HasFooterOfflineStatus) return;
-                string RenderNotice() => RenderSharedUploadNotice(uploadStatus);
-                var notice = RenderNotice();
-                var status = RemoveSharedOutboxNotice(StatusText);
-                if (notice.Length > 0)
-                {
-                    status = notice;
-                }
-                else if (status.Length == 0 && StatusText.Length > 0)
-                    status = consent.CanShare ? L.T("本机待上传队列已清空。") : L.T("共享已停用，旧待上传记录已清除。");
-                _sharedOutboxNoticeRenderer = RenderNotice;
-                _includeSharedOutboxNotice = true;
+                // Upload feedback belongs only to the footer. Do not replace
+                // scan/analysis status or append it to the usage popup.
                 RefreshSharedSummaryLanguage();
-                if (status != StatusText)
-                {
-                    StatusText = status;
-                    if (CurrentRoot is not null) SetAnalysisFeedback(CurrentRoot.Path, status);
-                }
+                var status = RemoveSharedOutboxNotice(StatusText);
+                if (status != StatusText) StatusText = status;
             }
             var dispatcher = System.Windows.Application.Current?.Dispatcher;
             if (dispatcher is not null && !dispatcher.CheckAccess()) await dispatcher.InvokeAsync(Apply).Task.ConfigureAwait(false);
@@ -427,14 +383,14 @@ public sealed partial class MainWindowViewModel
         catch (Exception) { /* Optional upload feedback must not interrupt scanning or analysis. */ }
     }
 
-    private string RemoveSharedOutboxNotice(string text)
+    private static string RemoveSharedOutboxNotice(string text)
     {
-        if (_lastSharedOutboxNotice.Length > 0) text = text.Replace(_lastSharedOutboxNotice, "", StringComparison.Ordinal);
-        // A report can contain a pending snapshot even when every busy-time UI read was deferred.
-        // Only this exact durable-pending template is live state; retain other failure evidence.
+        // A report may retain this old durable-pending snapshot. Its live state
+        // now comes from the footer only; retain unrelated failure evidence.
         text = System.Text.RegularExpressions.Regex.Replace(text,
             @"上传至云端经验库尚未完成：[0-9]+ 项已保存到本机待上传队列，将在网络恢复后自动重试。", "");
-        text = System.Text.RegularExpressions.Regex.Replace(text, @"Upload to the shared experience library is incomplete\. [0-9]+ items are saved in the local upload queue and will retry automatically when the connection returns\.", "");
+        text = System.Text.RegularExpressions.Regex.Replace(text,
+            @"Upload to the shared experience library is incomplete\. [0-9]+ items are saved in the local upload queue and will retry automatically when the connection returns\.", "");
         return string.Join("\n", text.Split('\n').Select(line => line.Trim()).Where(line => line.Length > 0));
     }
 

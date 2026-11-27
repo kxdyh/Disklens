@@ -14,9 +14,7 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
     [Fact]
     public void Footer_shows_real_inflight_upload_until_the_receipt_arrives() => OnSta(() =>
     {
-        using var fixture = new Fixture(configured: true);
-        fixture.Enable();
-        fixture.ApplyScan();
+        using var fixture = CreateUploadFixtureWithSettledLookup();
         var root = fixture.Vm.ScanRoot;
         var response = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         fixture.Client.BeforeContributionResponse = response.Task;
@@ -46,9 +44,7 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
     [Fact]
     public void Footer_enters_upload_stage_after_model_work_but_before_analysis_task_returns() => OnSta(() =>
     {
-        using var fixture = new Fixture(configured: true);
-        fixture.Enable();
-        fixture.ApplyScan();
+        using var fixture = CreateUploadFixtureWithSettledLookup();
         var root = fixture.Vm.ScanRoot;
         var response = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         fixture.Client.BeforeContributionResponse = response.Task;
@@ -70,9 +66,7 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
     [Fact]
     public void Background_upload_does_not_replace_active_model_progress_and_language_switch_is_live() => OnSta(() =>
     {
-        using var fixture = new Fixture(configured: true);
-        fixture.Enable();
-        fixture.ApplyScan();
+        using var fixture = CreateUploadFixtureWithSettledLookup();
         var originalLanguage = L.Current.Language;
         var originalPath = fixture.Vm.ScanRoot!.Path;
         typeof(MainWindowViewModel).GetProperty(nameof(MainWindowViewModel.IsAnalyzing))!.SetValue(fixture.Vm, true);
@@ -109,9 +103,7 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
     [Fact]
     public void Footer_counts_only_validated_batches_and_preserves_unacknowledged_items() => OnSta(() =>
     {
-        using var fixture = new Fixture(configured: true);
-        fixture.Enable();
-        fixture.ApplyScan();
+        using var fixture = CreateUploadFixtureWithSettledLookup();
         var secondResponse = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         fixture.Client.ContributionResponse = (count, epoch) =>
         {
@@ -151,9 +143,7 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
     [Fact]
     public void Revoking_sharing_during_upload_cannot_turn_an_old_receipt_into_completion() => OnSta(() =>
     {
-        using var fixture = new Fixture(configured: true);
-        fixture.Enable();
-        fixture.ApplyScan();
+        using var fixture = CreateUploadFixtureWithSettledLookup();
         var response = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         fixture.Client.BeforeContributionResponse = response.Task;
         var consent = fixture.Store.GetSnapshotAsync().GetAwaiter().GetResult();
@@ -174,8 +164,7 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
     [Fact]
     public void Offline_alert_has_priority_over_a_cached_upload_receipt() => OnSta(() =>
     {
-        using var fixture = new Fixture(configured: true);
-        fixture.Enable(); fixture.ApplyScan();
+        using var fixture = CreateUploadFixtureWithSettledLookup();
         var consent = fixture.Store.GetSnapshotAsync().GetAwaiter().GetResult();
         Complete(fixture.Runtime.Outbox.EnqueueAsync(consent, [QueuedForUi("footer-offline-priority")]));
         Complete(fixture.Runtime.Outbox.FlushAsync());
@@ -187,6 +176,77 @@ public sealed partial class SharedKnowledgeSelectionBehaviorTests
         Assert.Equal(L.T(NetworkFailureClassifier.OfflineMessage), FooterDetail(fixture.Vm));
         Assert.DoesNotContain("上传完成", FooterDetail(fixture.Vm));
     });
+
+    [Fact]
+    public void Upload_retry_status_stays_in_footer_and_never_uses_cloud_progress_panel() => OnSta(() =>
+    {
+        using var fixture = CreateUploadFixtureWithSettledLookup();
+        typeof(MainWindowViewModel).GetField("_sharedUploadStatus", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(fixture.Vm, new DiskLens.App.Services.SharedKnowledge.SharedUploadStatus(
+                DiskLens.App.Services.SharedKnowledge.SharedUploadStage.Failed, 2, AutomaticRetriesUsed: 1,
+                NextRetryAt: DateTimeOffset.UtcNow.AddMinutes(1)));
+        typeof(MainWindowViewModel).GetMethod("NotifySharedUploadFooter", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(fixture.Vm, null);
+
+        Assert.Contains("第 2/3 次", FooterDetail(fixture.Vm));
+        Assert.False(fixture.Vm.IsFooterCloudActivityVisible);
+        Assert.DoesNotContain("上传", fixture.Vm.FooterCloudActivityProgressText);
+        Assert.DoesNotContain("上传进度", fixture.Vm.FooterCloudActivityDetailText);
+        Assert.True(fixture.Vm.AnalyzeCommand.CanExecute(null));
+        Assert.False(fixture.Vm.IsAnalyzing);
+        Assert.False(fixture.Vm.IsRefreshing);
+
+        typeof(MainWindowViewModel).GetField("_sharedUploadStatus", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(fixture.Vm, new DiskLens.App.Services.SharedKnowledge.SharedUploadStatus(
+                DiskLens.App.Services.SharedKnowledge.SharedUploadStage.Uploading, 2, Total: 2,
+                AutomaticRetriesUsed: 2));
+        typeof(MainWindowViewModel).GetMethod("NotifySharedUploadFooter", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(fixture.Vm, null);
+        Assert.Contains("后台重试上传", FooterDetail(fixture.Vm));
+        Assert.Contains("第 2/3 次", FooterDetail(fixture.Vm));
+        Assert.False(fixture.Vm.IsFooterCloudActivityVisible);
+        Assert.True(fixture.Vm.AnalyzeCommand.CanExecute(null));
+
+        typeof(MainWindowViewModel).GetField("_sharedUploadStatus", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .SetValue(fixture.Vm, new DiskLens.App.Services.SharedKnowledge.SharedUploadStatus(
+                DiskLens.App.Services.SharedKnowledge.SharedUploadStage.Failed, 2, AutomaticRetriesUsed: 3,
+                AutomaticRetriesExhausted: true));
+        typeof(MainWindowViewModel).GetMethod("NotifySharedUploadFooter", BindingFlags.Instance | BindingFlags.NonPublic)!
+            .Invoke(fixture.Vm, null);
+        Assert.Contains("已重试 3 次", FooterDetail(fixture.Vm));
+        Assert.Contains("已保存在本机", FooterDetail(fixture.Vm));
+        Assert.False(fixture.Vm.IsFooterCloudActivityVisible);
+        Assert.True(fixture.Vm.AnalyzeCommand.CanExecute(null));
+    });
+
+    private static Fixture CreateUploadFixtureWithSettledLookup(bool configured = true)
+    {
+        var fixture = new Fixture(configured);
+        try
+        {
+            // A null index represents a failed download, independently of uploads.
+            // Use a complete empty library so all scan items can still be analyzed.
+            var now = DateTimeOffset.UtcNow;
+            fixture.Client.PathIndex = new SharedPathIndex(1, [], true, now, now.AddMinutes(4));
+            fixture.Client.ReturnMatches = true;
+            fixture.Enable();
+            fixture.ApplyScan();
+            WaitUntil(() => !fixture.Vm.IsLoadingSharedExperience
+                && !ReadUploadFixtureFlag(fixture.Vm, "_sharedConsentLookupPending")
+                && !ReadUploadFixtureFlag(fixture.Vm, "_sharedConsentLookupPosted")
+                && !ReadUploadFixtureFlag(fixture.Vm, "_isPreparingSharedLookup")
+                && (typeof(MainWindowViewModel).GetField("_sharedLookupProgress", BindingFlags.Instance | BindingFlags.NonPublic)!
+                    .GetValue(fixture.Vm) as DiskLens.App.Services.SharedKnowledge.SharedLookupProgress)?.Stage
+                    == DiskLens.App.Services.SharedKnowledge.SharedLookupStage.Completed);
+            Complete(fixture.Vm.RefreshSharedOutboxStatusAsync());
+            Assert.False(fixture.Vm.IsFooterCloudActivityVisible);
+            return fixture;
+        }
+        catch { fixture.Dispose(); throw; }
+    }
+
+    private static bool ReadUploadFixtureFlag(MainWindowViewModel vm, string name) =>
+        (bool)typeof(MainWindowViewModel).GetField(name, BindingFlags.Instance | BindingFlags.NonPublic)!.GetValue(vm)!;
 
     private static void SetFooterAiProgress(MainWindowViewModel vm, AiAnalysisStage stage, string message)
     {

@@ -260,7 +260,6 @@ public sealed partial class MainWindowViewModel
         {
             SharedRuntime.Settings.Changed -= SharedSettings_OnChanged;
             SharedRuntime.Outbox.Changed -= SharedOutbox_OnChanged;
-            SharedRuntime.NetworkUnavailable -= SharedRuntime_OnNetworkUnavailable;
             SharedRuntime.ConnectionChanged -= SharedRuntime_OnConnectionChanged;
         }
         PropertyChanged -= SharedOutbox_OnViewModelChanged;

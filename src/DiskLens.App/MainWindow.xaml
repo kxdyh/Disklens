@@ -1601,16 +1601,8 @@
                                    Text="{loc:Bind FooterText}" TextTrimming="CharacterEllipsis" ToolTip="{loc:Bind FooterText}" />
                     </DockPanel>
                     <TextBlock x:Name="FooterStatusText" Margin="0,3,0,0" FontSize="12" Foreground="{DynamicResource SecondaryTextBrush}"
-                               TextTrimming="CharacterEllipsis" AutomationProperties.LiveSetting="Polite">
-                        <TextBlock.Style><Style TargetType="TextBlock">
-                            <Setter Property="Text" Value="{Binding FooterStatusDetailText}" />
-                            <Setter Property="ToolTip" Value="{Binding FooterStatusDetailText}" />
-                            <Style.Triggers><DataTrigger Binding="{Binding IsLoadingSharedExperience}" Value="True">
-                                <Setter Property="Text" Value="{loc:Text s502}" />
-                                <Setter Property="ToolTip" Value="{loc:Text s502}" />
-                            </DataTrigger></Style.Triggers>
-                        </Style></TextBlock.Style>
-                    </TextBlock>
+                               TextTrimming="CharacterEllipsis" AutomationProperties.LiveSetting="Polite"
+                               Text="{loc:Bind FooterStatusDetailText}" ToolTip="{loc:Bind FooterStatusDetailText}" />
                 </StackPanel>
                 <StackPanel Grid.Column="3" Margin="0,0,12,0" Orientation="Horizontal" VerticalAlignment="Center">
                     <StackPanel.Resources>
@@ -1741,11 +1733,6 @@
                             <TextBlock Margin="0,4,0,0" FontSize="14" TextWrapping="Wrap"
                                        Foreground="{DynamicResource SecondaryTextBrush}"
                                        Text="{loc:Bind FooterCloudActivityDetailText}" />
-                            <TextBlock x:Name="FooterSharedUploadReminder" Margin="0,5,0,0"
-                                       FontSize="14" FontWeight="Bold" TextWrapping="Wrap"
-                                       Foreground="{DynamicResource PrimaryTextBrush}"
-                                       Text="{loc:Bind FooterSharedUploadReminderText}"
-                                       Visibility="{Binding IsFooterSharedUploadReminderVisible, Converter={StaticResource BoolToVisibilityConverter}}" />
                         </StackPanel>
                         <StackPanel Grid.Column="2" Margin="24,0,0,0" VerticalAlignment="Center">
                             <TextBlock FontSize="12" LineHeight="20"
